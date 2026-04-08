@@ -5,6 +5,8 @@ local LP = Players.LocalPlayer
 
 -- Variables
 local TargetPos = nil
+local Flying = false
+local FlySpeed = 50
 local Sliding = false
 local SlideSpeed = 50
 local BringingAll = false
@@ -12,11 +14,11 @@ local BringingAll = false
 -- === สร้าง UI หลัก ===
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 260, 0, 450)
-MainFrame.Position = UDim2.new(0.5, -130, 0.5, -225)
+MainFrame.Size = UDim2.new(0, 260, 0, 480)
+MainFrame.Position = UDim2.new(0.5, -130, 0.5, -240)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.Active = true
-MainFrame.Draggable = true -- เปิดใช้งานการลากพื้นฐาน
+MainFrame.Draggable = true 
 Instance.new("UICorner", MainFrame)
 
 -- ส่วน Header
@@ -25,21 +27,34 @@ Header.Size = UDim2.new(1, 0, 0, 40)
 Header.BackgroundTransparency = 1
 
 local Title = Instance.new("TextLabel", Header)
-Title.Text = "MOD MENU"
-Title.Size = UDim2.new(0.6, 0, 1, 0)
+Title.Text = "MOD MENU V2"
+Title.Size = UDim2.new(0.5, 0, 1, 0)
 Title.TextColor3 = Color3.new(1,1,1)
 Title.BackgroundTransparency = 1
-Title.TextSize = 18
+Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
+
+-- [ปุ่ม X สำหรับลบ UI]
+local CloseBtn = Instance.new("TextButton", Header)
+CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+CloseBtn.Position = UDim2.new(1, -40, 0, 2)
+CloseBtn.Text = "X"
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+CloseBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", CloseBtn)
+CloseBtn.MouseButton1Click:Connect(function()
+    Flying = false
+    Sliding = false
+    ScreenGui:Destroy() -- ลบ UI ทั้งหมด
+end)
 
 -- [ปุ่ม + สำหรับเพิ่ม Script]
 local AddScriptBtn = Instance.new("TextButton", Header)
 AddScriptBtn.Size = UDim2.new(0, 35, 0, 35)
-AddScriptBtn.Position = UDim2.new(1, -40, 0, 2)
+AddScriptBtn.Position = UDim2.new(1, -80, 0, 2)
 AddScriptBtn.Text = "+"
 AddScriptBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 127)
 AddScriptBtn.TextColor3 = Color3.new(1,1,1)
-AddScriptBtn.TextSize = 25
 Instance.new("UICorner", AddScriptBtn)
 
 -- ส่วน List
@@ -47,14 +62,13 @@ local Scroll = Instance.new("ScrollingFrame", MainFrame)
 Scroll.Size = UDim2.new(1, 0, 1, -50)
 Scroll.Position = UDim2.new(0, 0, 0, 45)
 Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 0) -- ปรับ Auto
-Scroll.ScrollBarThickness = 4
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+Scroll.ScrollBarThickness = 2
 local UIList = Instance.new("UIListLayout", Scroll)
 UIList.Padding = UDim.new(0, 8)
 UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-UIList.SortOrder = Enum.SortOrder.LayoutOrder
 
--- === ฟังก์ชันสร้างปุ่มหลัก ===
+-- === ฟังก์ชันสร้างปุ่ม ===
 local function CreateButton(txt, color, callback, subCallback)
     local Container = Instance.new("Frame", Scroll)
     Container.Size = UDim2.new(0.9, 0, 0, 45)
@@ -65,7 +79,6 @@ local function CreateButton(txt, color, callback, subCallback)
     MainBtn.Text = txt
     MainBtn.BackgroundColor3 = color
     MainBtn.TextColor3 = Color3.new(1,1,1)
-    MainBtn.Font = Enum.Font.Gotham
     Instance.new("UICorner", MainBtn)
     MainBtn.MouseButton1Click:Connect(callback)
 
@@ -81,57 +94,85 @@ local function CreateButton(txt, color, callback, subCallback)
     end
     
     Scroll.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 20)
-    return Container
 end
 
--- 1. Smooth Spiderman
+-- 1. Fly Mode (ปรับปรุงใหม่)
+CreateButton("FLY MODE", Color3.fromRGB(0, 102, 204), function()
+    Flying = not Flying
+    local char = LP.Character
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    
+    if Flying then
+        local bg = Instance.new("BodyGyro", hrp)
+        bg.P = 9e4
+        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.cframe = hrp.CFrame
+        
+        local bv = Instance.new("BodyVelocity", hrp)
+        bv.velocity = Vector3.new(0, 0.1, 0)
+        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        
+        task.spawn(function()
+            while Flying do
+                local cam = workspace.CurrentCamera
+                local moveDir = char.Humanoid.MoveDirection
+                
+                -- บินตามทิศทางการหันหน้าจอ
+                if moveDir.Magnitude > 0 then
+                    bv.velocity = cam.CFrame.LookVector * FlySpeed
+                else
+                    bv.velocity = Vector3.new(0, 0.1, 0)
+                end
+                bg.cframe = cam.CFrame
+                RunService.RenderStepped:Wait()
+            end
+            bg:Destroy()
+            bv:Destroy()
+        end)
+    end
+end, function()
+    if FlySpeed < 300 then FlySpeed = FlySpeed + 50 else FlySpeed = 50 end
+    print("Fly Speed: "..FlySpeed)
+end)
+
+-- 2. Slide Mode (พุ่งตามทิศทาง)
+CreateButton("SLIDE MODE", Color3.fromRGB(0, 150, 100), function()
+    Sliding = not Sliding
+    task.spawn(function()
+        while Sliding do
+            local char = LP.Character
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local hum = char:FindFirstChild("Humanoid")
+            if hrp and hum then
+                local moveDir = hum.MoveDirection
+                if moveDir.Magnitude > 0 then
+                    hrp.Velocity = Vector3.new(moveDir.X * SlideSpeed, hrp.Velocity.Y, moveDir.Z * SlideSpeed)
+                else
+                    hrp.Velocity = Vector3.new(hrp.CFrame.LookVector.X * SlideSpeed, hrp.Velocity.Y, hrp.CFrame.LookVector.Z * SlideSpeed)
+                end
+            end
+            RunService.RenderStepped:Wait()
+        end
+    end)
+end, function()
+    if SlideSpeed < 250 then SlideSpeed = SlideSpeed + 50 else SlideSpeed = 50 end
+    print("Slide Speed: "..SlideSpeed)
+end)
+
+-- 3. Smooth Spider
 CreateButton("SMOOTH SPIDER", Color3.fromRGB(150, 0, 0), function()
     if TargetPos then
-        local char = LP.Character
         task.spawn(function()
             for i = 0, 1, 0.05 do
-                if not char or not char:FindFirstChild("HumanoidRootPart") then break end
-                char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame:Lerp(TargetPos, i)
+                if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then break end
+                LP.Character.HumanoidRootPart.CFrame = LP.Character.HumanoidRootPart.CFrame:Lerp(TargetPos, i)
                 task.wait(0.01)
             end
         end)
     end
-end, function() print("Set Target First!") end)
+end, function() TargetPos = LP.Character.HumanoidRootPart.CFrame print("Pos Set!") end)
 
--- 2. Slide Mode (พุ่งไปตามทิศทางที่หัน)
-CreateButton("SLIDE MODE", Color3.fromRGB(0, 150, 100), function()
-    Sliding = not Sliding
-    if Sliding then
-        print("Slide: ON (Speed: "..SlideSpeed..")")
-        task.spawn(function()
-            while Sliding do
-                local char = LP.Character
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                local hum = char:FindFirstChild("Humanoid")
-                
-                if hrp and hum then
-                    -- คำนวณทิศทางจาก MoveDirection (ถ้ากดเดิน) หรือทิศที่หน้าหัน (LookVector)
-                    local moveDir = hum.MoveDirection
-                    if moveDir.Magnitude > 0 then
-                        hrp.Velocity = Vector3.new(moveDir.X * SlideSpeed, hrp.Velocity.Y, moveDir.Z * SlideSpeed)
-                    else
-                        -- ถ้าไม่ได้กดเดิน ให้พุ่งไปข้างหน้าตรงๆ
-                        local lookDir = hrp.CFrame.LookVector
-                        hrp.Velocity = Vector3.new(lookDir.X * SlideSpeed, hrp.Velocity.Y, lookDir.Z * SlideSpeed)
-                    end
-                end
-                RunService.RenderStepped:Wait()
-            end
-        end)
-    else
-        print("Slide: OFF")
-    end
-end, function()
-    if SlideSpeed < 200 then SlideSpeed = SlideSpeed + 25 else SlideSpeed = 50 end
-    print("Slide Speed set to: "..SlideSpeed)
-end)
-
--- 3. Bring All
+-- 4. Bring All
 CreateButton("BRING ALL", Color3.fromRGB(100, 0, 150), function()
     BringingAll = not BringingAll
     task.spawn(function()
@@ -144,28 +185,14 @@ CreateButton("BRING ALL", Color3.fromRGB(100, 0, 150), function()
             task.wait(0.3)
         end
     end)
-end, function() BringingAll = false end)
-
--- 4. Set/Clear Pos
-CreateButton("SET POS", Color3.fromRGB(0, 120, 0), function() 
-    TargetPos = LP.Character.HumanoidRootPart.CFrame 
-    print("Position Saved!")
-end, function() TargetPos = nil print("Position Cleared") end)
+end)
 
 -- === ระบบเพิ่ม Script อิสระ (+) ===
 local scriptCount = 0
 AddScriptBtn.MouseButton1Click:Connect(function()
     scriptCount = scriptCount + 1
-    local customCode = "-- ใส่สคริปต์ของคุณที่นี่\nprint('Script "..scriptCount.." Running!')"
-    
     CreateButton("CUSTOM SCRIPT "..scriptCount, Color3.fromRGB(80, 80, 80), function()
-        -- ฟังก์ชันรันสคริปต์ (ใช้ loadstring สำหรับ Executor ทั่วไป)
-        local success, err = pcall(function()
-            local func = loadstring(customCode)
-            if func then func() else warn("Loadstring not supported or Code Error") end
-        end)
-        if not success then warn("Error: "..err) end
-    end, function()
-        print("Edit Script "..scriptCount.." (Feature coming soon)")
-    end)
-end)
+        print("Running Custom Script "..scriptCount)
+        -- ใส่โค้ดที่ต้องการรันตรงนี้
+    end, function() print("Config Script "..scriptCount) end)
+end
