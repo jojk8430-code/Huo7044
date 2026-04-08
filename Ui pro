@@ -1,198 +1,889 @@
-local UserInputService = game:GetService("UserInputService")
+-- โหลด Rayfield
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Main Window
+local Window = Rayfield:CreateWindow({
+Name = "KOMAT Hub",
+LoadingTitle = "Loading...",
+LoadingSubtitle = "by เกรซจิสุดหล่อ",
+ConfigurationSaving = {
+Enabled = true,
+FolderName = "เกรซจิสุดหล่อ",
+FileName = "Config"
+}
+})
+
+-- Tabs
+local SettingsTab = Window:CreateTab("ตั้งไรก็ตั้ง🙄🙄")
+local MainTab     = Window:CreateTab("เมนูหลักจ้ะ💅💅")
+local TeleportTab = Window:CreateTab("บินไปหาผัว")
+local VisualsTab  = Window:CreateTab("มองไร🤔")
+local ExtraTab    = Window:CreateTab("เสริม🤑")
+local FPSTab      = Window:CreateTab("ตั้งดินน้ำมัน🔥")
+local EventTab    = Window:CreateTab("eventต้องตามทันนะจ๊ะ😆")
+local MapTab      = Window:CreateTab("กดดู🤫")
+
+-- Auto Bhop
+local autoBhop = false
+local floatingBhopButton
+local TweenService = game:GetService("TweenService")
+local player = game.Players.LocalPlayer
+
+-- สร้าง FloatingGui
+local FloatingGui = game:GetService("CoreGui"):FindFirstChild("FloatingGui")
+if not FloatingGui then
+FloatingGui = Instance.new("ScreenGui")
+FloatingGui.Name = "FloatingGui"
+FloatingGui.Parent = game:GetService("CoreGui")
+end
+
+-- ปุ่มลอย
+local function createBhopFloatingButton()
+if floatingBhopButton then return end
+
+local btn = Instance.new("TextButton")  
+btn.Size = UDim2.new(0,140,0,52)  
+btn.Position = UDim2.new(0.3,-70,0.8,0)  
+btn.AnchorPoint = Vector2.new(0.5,0)  
+btn.BackgroundColor3 = Color3.fromRGB(180,220,255)  
+btn.BackgroundTransparency = 0.35  
+btn.TextColor3 = Color3.fromRGB(0,70,150)  
+btn.Text = "Auto Bhop: OFF"  
+btn.Font = Enum.Font.GothamBold  
+btn.TextSize = 14  
+btn.Parent = FloatingGui  
+btn.Active = true  
+btn.Draggable = true  
+
+local corner = Instance.new("UICorner", btn)  
+corner.CornerRadius = UDim.new(0,18)  
+
+local stroke = Instance.new("UIStroke", btn)  
+stroke.Thickness = 2.5  
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border  
+stroke.Color = Color3.fromRGB(0,120,255)  
+
+task.spawn(function()  
+    while btn.Parent do  
+        TweenService:Create(stroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Color = Color3.fromRGB(0,80,255)}):Play()  
+        task.wait(0.8)  
+        TweenService:Create(stroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Color = Color3.fromRGB(160,230,255)}):Play()  
+        task.wait(0.8)  
+    end  
+end)  
+
+btn.MouseButton1Click:Connect(function()  
+    autoBhop = not autoBhop  
+    btn.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"  
+end)  
+
+floatingBhopButton = btn
+
+end
+
+local function removeBhopFloatingButton()
+if floatingBhopButton then
+floatingBhopButton:Destroy()
+floatingBhopButton = nil
+end
+end
+
+-- Toggle ปกติ
+MainTab:CreateToggle({
+Name = "Auto Jump",
+CurrentValue = false,
+Callback = function(state)
+autoBhop = state
+end
+})
+
+-- Toggle ปุ่มลอย
+MainTab:CreateToggle({
+Name = "Auto Jump (Floating Button)",
+CurrentValue = false,
+Callback = function(state)
+if state then
+createBhopFloatingButton()
+else
+removeBhopFloatingButton()
+autoBhop = false
+end
+end
+})
+
+-- ระบบ Auto Bhop
+task.spawn(function()
 local RunService = game:GetService("RunService")
+local rayDistance = 4
+local rayParams = RaycastParams.new()
+rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+while true do  
+    RunService.Heartbeat:Wait()  
+    if autoBhop then  
+        local char = player.Character or player.CharacterAdded:Wait()  
+        local humanoid = char:FindFirstChildOfClass("Humanoid")  
+        local root = char:FindFirstChild("HumanoidRootPart")  
+        if humanoid and root then  
+            rayParams.FilterDescendantsInstances = {char}  
+            local result = workspace:Raycast(root.Position, Vector3.new(0,-rayDistance,0), rayParams)  
+            if result then  
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)  
+            end  
+        end  
+    end  
+end
+
+end)
+
+-- =========================
+-- Lag Switch
+-- =========================
+local floatingLagButton
+
+local function lagSwitch(duration)
+local start = tick()
+while tick() - start < duration do
+for i = 1, 1e7 do
+local a = math.random()
+end
+end
+end
+
+-- ปุ่มใน Tab
+MainTab:CreateButton({
+Name = "Lag Switch (ปกติ)",
+Callback = function()
+lagSwitch(0.5)
+end
+})
+
+-- =========================
+-- ปุ่มลอยสไตล์มึง
+-- =========================
+local function createLagFloatingButton()
+if floatingLagButton then return end
+
+local btn = Instance.new("TextButton")  
+btn.Size = UDim2.new(0,140,0,52)  
+btn.Position = UDim2.new(0.7,-70,0.8,0)  
+btn.AnchorPoint = Vector2.new(0.5,0)  
+btn.BackgroundColor3 = Color3.fromRGB(180,220,255)  
+btn.BackgroundTransparency = 0.35  
+btn.TextColor3 = Color3.fromRGB(0,70,150)  
+btn.Text = "Lag Switch"  
+btn.Font = Enum.Font.GothamBold  
+btn.TextSize = 14  
+btn.Parent = FloatingGui  
+btn.Active = true  
+btn.Draggable = true  
+
+-- มุมโค้ง  
+local corner = Instance.new("UICorner", btn)  
+corner.CornerRadius = UDim.new(0,18)  
+
+-- ขอบ  
+local stroke = Instance.new("UIStroke", btn)  
+stroke.Thickness = 2.5  
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border  
+stroke.Color = Color3.fromRGB(0,120,255)  
+
+-- ไล่สี  
+task.spawn(function()  
+    while btn.Parent do  
+        TweenService:Create(  
+            stroke,  
+            TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),  
+            {Color = Color3.fromRGB(0,80,255)}  
+        ):Play()  
+        task.wait(0.8)  
+
+        TweenService:Create(  
+            stroke,  
+            TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),  
+            {Color = Color3.fromRGB(160,230,255)}  
+        ):Play()  
+        task.wait(0.8)  
+    end  
+end)  
+
+-- กดปุ่ม  
+btn.MouseButton1Click:Connect(function()  
+    lagSwitch(0.5)  
+end)  
+
+floatingLagButton = btn
+
+end
+
+local function removeLagFloatingButton()
+if floatingLagButton then
+floatingLagButton:Destroy()
+floatingLagButton = nil
+end
+end
+
+-- Toggle ปุ่มลอย
+MainTab:CreateToggle({
+Name = "Lag Switch (Floating Button)",
+CurrentValue = false,
+Callback = function(state)
+if state then
+createLagFloatingButton()
+else
+removeLagFloatingButton()
+end
+end
+})
+
+-- =========================  
+-- Auto Bounce (แม่นยำสูง + ปรับความสูงได้ + ปุ่มลอยสไตล์ Auto Jump)  
+-- =========================  
+local autoBounce = false  
+local floatingBounceButton  
+local bouncePower = 150 -- ค่าเริ่มต้น  
+local groundCheckDistance = 6 -- ระยะเช็คใกล้พื้น (studs)  
+local TweenService = game:GetService("TweenService")
+local player = game.Players.LocalPlayer
+
+-- ระบบเด้ง
+task.spawn(function()  
+    local RunService = game:GetService("RunService")  
+    while true do  
+        RunService.Heartbeat:Wait()
+        if autoBounce then  
+            local char = player.Character  
+            if char then  
+                local root = char:FindFirstChild("HumanoidRootPart")  
+                local humanoid = char:FindFirstChildOfClass("Humanoid")  
+                if root and humanoid then  
+                    local rayOrigin = root.Position  
+                    local rayDirection = Vector3.new(0, -groundCheckDistance, 0)  
+                    local raycastParams = RaycastParams.new()  
+                    raycastParams.FilterDescendantsInstances = {char}  
+                    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist  
+
+                    local ray = workspace:Raycast(rayOrigin, rayDirection, raycastParams)  
+
+                    if ray and root.Velocity.Y < -5 then  
+                        root.Velocity = Vector3.new(root.Velocity.X, bouncePower, root.Velocity.Z)  
+                    end  
+                end  
+            end  
+        end  
+    end  
+end)  
+
+-- Toggle ปกติ
+MainTab:CreateToggle({  
+    Name="ออโต้เด้ง (ปกติ)",  
+    CurrentValue=false,  
+    Callback=function(state) autoBounce = state end  
+})  
+
+-- Slider ปรับความสูง
+MainTab:CreateSlider({  
+    Name = "ปรับความสูงการเด้ง",  
+    Range = {50, 300},  
+    Increment = 5,  
+    Suffix = "studs",  
+    CurrentValue = bouncePower,  
+    Callback = function(value)  
+        bouncePower = value  
+    end  
+})  
+
+-- =========================
+-- ปุ่มลอยสไตล์ Auto Jump
+-- =========================
+local function createBounceFloatingButton()
+    if floatingBounceButton then return end
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0,140,0,52)
+    btn.Position = UDim2.new(0.5,-70,0.85,0)
+    btn.AnchorPoint = Vector2.new(0.5,0)
+    btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
+    btn.BackgroundTransparency = 0.35
+    btn.TextColor3 = Color3.fromRGB(0,70,150)
+    btn.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.Parent = FloatingGui
+    btn.Active = true
+    btn.Draggable = true
+
+    -- มุมโค้ง
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(0,18)
+
+    -- ขอบ
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2.5
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Color = Color3.fromRGB(0,120,255)
+
+    -- ไล่สีเหมือน Auto Jump
+    task.spawn(function()
+        while btn.Parent do
+            TweenService:Create(
+                stroke,
+                TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                {Color = Color3.fromRGB(0,80,255)}
+            ):Play()
+            task.wait(0.8)
+            TweenService:Create(
+                stroke,
+                TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                {Color = Color3.fromRGB(160,230,255)}
+            ):Play()
+            task.wait(0.8)
+        end
+    end)
+
+    -- กดปุ่ม
+    btn.MouseButton1Click:Connect(function()
+        autoBounce = not autoBounce
+        btn.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
+    end)
+
+    floatingBounceButton = btn
+end
+
+local function removeBounceFloatingButton()
+    if floatingBounceButton then
+        floatingBounceButton:Destroy()
+        floatingBounceButton = nil
+    end
+end
+
+-- Toggle ปุ่มลอย
+MainTab:CreateToggle({
+    Name = "เด้งไปทำไร (ปุ่มลอย)",
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            createBounceFloatingButton()
+        else
+            removeBounceFloatingButton()
+            autoBounce = false
+        end
+    end
+})
+
+-- =========================
+-- Auto Respawn (Fake Revive) + ปุ่มลอยสไตล์ Hub
+-- =========================
+getgenv().AutoRespawnEnabled = false
+local autoRespawnMethod = "Fake Revive"
+local lastSavedPosition
+local floatingRespawnButton
+local player = game.Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+
+-- ฟังก์ชันสร้างปุ่มลอย
+local function createRespawnFloatingButton()
+    if floatingRespawnButton then return end
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0,140,0,52)
+    btn.Position = UDim2.new(0.7,-70,0.85,0)
+    btn.AnchorPoint = Vector2.new(0.5,0)
+    btn.BackgroundColor3 = Color3.fromRGB(255,80,80)
+    btn.BackgroundTransparency = 0.35
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.Text = getgenv().AutoRespawnEnabled and "Auto Respawn: ON" or "Auto Respawn: OFF"
+    btn.Parent = FloatingGui
+    btn.Active = true
+    btn.Draggable = true
+    btn.ZIndex = 10
+
+    -- มุมโค้ง
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(0,18)
+
+    -- ขอบ
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2.5
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Color = Color3.fromRGB(255,120,120)
+
+    -- ไล่สีสไตล์เดียวกับ Auto Jump/Bounce
+    task.spawn(function()
+        while btn.Parent do
+            TweenService:Create(stroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Color = Color3.fromRGB(255,60,60)}):Play()
+            task.wait(0.8)
+            TweenService:Create(stroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Color = Color3.fromRGB(255,150,150)}):Play()
+            task.wait(0.8)
+        end
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        getgenv().AutoRespawnEnabled = not getgenv().AutoRespawnEnabled
+        btn.Text = getgenv().AutoRespawnEnabled and "Auto Respawn: ON" or "Auto Respawn: OFF"
+        btn.BackgroundColor3 = getgenv().AutoRespawnEnabled and Color3.fromRGB(80,255,80) or Color3.fromRGB(255,80,80)
+    end)
+
+    floatingRespawnButton = btn
+end
+
+local function removeRespawnFloatingButton()
+    if floatingRespawnButton then
+        floatingRespawnButton:Destroy()
+        floatingRespawnButton = nil
+    end
+end
+
+-- ฟังก์ชันตั้งค่า Auto Revive สำหรับตัวละคร
+local function setupAutoRevive(character)
+    task.defer(function()
+        character:WaitForChild("HumanoidRootPart",5)
+        character:WaitForChild("Humanoid",5)
+
+        -- เก็บตำแหน่งล่าสุด
+        task.spawn(function()
+            while character and character.Parent do
+                local hrp = character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    character:SetAttribute("LastPosition", hrp.Position)
+                end
+                task.wait(0.2)
+            end
+        end)
+
+        -- ตรวจ Downed
+        character:GetAttributeChangedSignal("Downed"):Connect(function()
+            if not getgenv().AutoRespawnEnabled then return end
+            if character:GetAttribute("Downed") ~= true then return end
+            if autoRespawnMethod ~= "Fake Revive" then return end
+
+            local hrp = character:FindFirstChild("HumanoidRootPart")
+            if hrp then lastSavedPosition = hrp.Position end
+
+            task.wait(3)
+            local start = tick()
+            repeat
+                pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("Events",9e9)
+                        :WaitForChild("Player",9e9)
+                        :WaitForChild("ChangePlayerMode",9e9)
+                        :FireServer(true)
+                end)
+                task.wait(1)
+            until character:GetAttribute("Downed") ~= true or tick() - start > 1
+
+            local newChar
+            repeat
+                newChar = player.Character
+                task.wait()
+            until newChar and newChar:FindFirstChild("HumanoidRootPart")
+
+            local newHRP = newChar:FindFirstChild("HumanoidRootPart")
+            if lastSavedPosition and newHRP then
+                newHRP.CFrame = CFrame.new(lastSavedPosition)
+                task.wait(0.5)
+            end
+        end)
+    end)
+end
+
+-- เรียก setup สำหรับตัวละครปัจจุบันและใหม่
+if player.Character then setupAutoRevive(player.Character) end
+player.CharacterAdded:Connect(setupAutoRevive)
+
+-- =========================
+-- ปุ่มปกติ (แก้แล้ว)
+-- =========================
+MainTab:CreateToggle({
+    Name = "เกิดมาได้ไง(ปกติ)",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().AutoRespawnEnabled = state
+    end
+})
+
+-- =========================
+-- Dropdown (Rayfield ต้องใช้ CreateDropdown)
+-- =========================
+MainTab:CreateDropdown({
+    Name = "วิธีรีสปอน(ทำไม่เป้นก็ตาย)",
+    Options = {"Random","Fake Revive"},
+    CurrentOption = autoRespawnMethod,
+    MultipleOptions = false,
+    Callback = function(option)
+        autoRespawnMethod = option
+    end
+})
+
+-- =========================
+-- Toggle ปุ่มลอย (แก้แล้ว)
+-- =========================
+MainTab:CreateToggle({
+    Name = "มึงเกิดได้ไง (ปุ่มลอย)",
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            createRespawnFloatingButton()
+        else
+            removeRespawnFloatingButton()
+            getgenv().AutoRespawnEnabled = false
+        end
+    end
+})
+
+-- =========================
+-- Warp Up ปกติ
+-- =========================
+TeleportTab:CreateButton({
+    Name = "วาปหาผัว",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local char = player.Character
+        if char then
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if root then
+                root.CFrame = root.CFrame + Vector3.new(0,1200,0)
+            end
+        end
+    end
+})
+
+-- =========================
+-- Warp Up Floating Button
+-- =========================
+local floatingWarpButton
+
+local function createWarpFloatingButton()
+    if floatingWarpButton then return end
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0,140,0,52)
+    btn.Position = UDim2.new(0.5,-70,0.7,0)
+    btn.AnchorPoint = Vector2.new(0.5,0)
+    btn.BackgroundColor3 = Color3.fromRGB(180,220,255)  -- สีฟ้า
+    btn.BackgroundTransparency = 0.35
+    btn.TextColor3 = Color3.fromRGB(0,70,150)
+    btn.Text = "วาปหาผัว"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.Parent = FloatingGui
+    btn.Active = true
+    btn.Draggable = true
+
+    -- มุมโค้ง
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(0,18)
+
+    -- ขอบน้ำเงิน
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2.5
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Color = Color3.fromRGB(0,120,255)
+
+    -- ปรับสีบักควย Floating Button อื่น
+    task.spawn(function()
+        while btn.Parent do
+            TweenService:Create(stroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Color = Color3.fromRGB(0,80,255)}):Play()
+            task.wait(0.8)
+            TweenService:Create(stroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Color = Color3.fromRGB(0,120,255)}):Play()
+            task.wait(0.8)
+        end
+    end)
+
+    -- กดปุ่ม
+    btn.MouseButton1Click:Connect(function()
+        local player = game.Players.LocalPlayer
+        local char = player.Character
+        if char then
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if root then
+                root.CFrame = root.CFrame + Vector3.new(0,1200,0)
+            end
+        end
+    end)
+
+    floatingWarpButton = btn
+end
+
+local function removeWarpFloatingButton()
+    if floatingWarpButton then
+        floatingWarpButton:Destroy()
+        floatingWarpButton = nil
+    end
+end
+
+-- Toggle ปุ่มลอย
+TeleportTab:CreateToggle({
+    Name = "ลอยอากาศหาพ่อง (Floating Button)",
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            createWarpFloatingButton()
+        else
+            removeWarpFloatingButton()
+        end
+    end
+})
+
+-- =========================
+-- VARIABLES
+-- =========================
+local autoFarm = false
+local farmPart
+
 local Players = game:GetService("Players")
-local LP = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
 
--- Variables
-local TargetPos = nil
-local Flying = false
-local FlySpeed = 50
-local Sliding = false
-local SlideSpeed = 50
-local BringingAll = false
+local LocalPlayer = Players.LocalPlayer
 
--- === สร้าง UI หลัก ===
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 260, 0, 480)
-MainFrame.Position = UDim2.new(0.5, -130, 0.5, -240)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Active = true
-MainFrame.Draggable = true 
-Instance.new("UICorner", MainFrame)
+-- =========================
+-- CREATE PART
+-- =========================
+local function createPart()
+    if farmPart then return end
 
--- ส่วน Header
-local Header = Instance.new("Frame", MainFrame)
-Header.Size = UDim2.new(1, 0, 0, 40)
-Header.BackgroundTransparency = 1
-
-local Title = Instance.new("TextLabel", Header)
-Title.Text = "MOD MENU V2"
-Title.Size = UDim2.new(0.5, 0, 1, 0)
-Title.TextColor3 = Color3.new(1,1,1)
-Title.BackgroundTransparency = 1
-Title.TextSize = 16
-Title.Font = Enum.Font.GothamBold
-
--- [ปุ่ม X สำหรับลบ UI]
-local CloseBtn = Instance.new("TextButton", Header)
-CloseBtn.Size = UDim2.new(0, 35, 0, 35)
-CloseBtn.Position = UDim2.new(1, -40, 0, 2)
-CloseBtn.Text = "X"
-CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-CloseBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", CloseBtn)
-CloseBtn.MouseButton1Click:Connect(function()
-    Flying = false
-    Sliding = false
-    ScreenGui:Destroy() -- ลบ UI ทั้งหมด
-end)
-
--- [ปุ่ม + สำหรับเพิ่ม Script]
-local AddScriptBtn = Instance.new("TextButton", Header)
-AddScriptBtn.Size = UDim2.new(0, 35, 0, 35)
-AddScriptBtn.Position = UDim2.new(1, -80, 0, 2)
-AddScriptBtn.Text = "+"
-AddScriptBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 127)
-AddScriptBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", AddScriptBtn)
-
--- ส่วน List
-local Scroll = Instance.new("ScrollingFrame", MainFrame)
-Scroll.Size = UDim2.new(1, 0, 1, -50)
-Scroll.Position = UDim2.new(0, 0, 0, 45)
-Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-Scroll.ScrollBarThickness = 2
-local UIList = Instance.new("UIListLayout", Scroll)
-UIList.Padding = UDim.new(0, 8)
-UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
--- === ฟังก์ชันสร้างปุ่ม ===
-local function CreateButton(txt, color, callback, subCallback)
-    local Container = Instance.new("Frame", Scroll)
-    Container.Size = UDim2.new(0.9, 0, 0, 45)
-    Container.BackgroundTransparency = 1
-
-    local MainBtn = Instance.new("TextButton", Container)
-    MainBtn.Size = UDim2.new(0.78, 0, 1, 0)
-    MainBtn.Text = txt
-    MainBtn.BackgroundColor3 = color
-    MainBtn.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", MainBtn)
-    MainBtn.MouseButton1Click:Connect(callback)
-
-    if subCallback then
-        local SubBtn = Instance.new("TextButton", Container)
-        SubBtn.Size = UDim2.new(0.18, 0, 1, 0)
-        SubBtn.Position = UDim2.new(0.82, 0, 0, 0)
-        SubBtn.Text = "⚙️"
-        SubBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-        SubBtn.TextColor3 = Color3.new(1,1,1)
-        Instance.new("UICorner", SubBtn)
-        SubBtn.MouseButton1Click:Connect(subCallback)
-    end
-    
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 20)
+    farmPart = Instance.new("Part")
+    farmPart.Size = Vector3.new(10,1,10)
+    farmPart.Anchored = true
+    farmPart.Position = Vector3.new(0,1200,0)
+    farmPart.Name = "FarmPart"
+    farmPart.Parent = workspace
 end
 
--- 1. Fly Mode (ปรับปรุงใหม่)
-CreateButton("FLY MODE", Color3.fromRGB(0, 102, 204), function()
-    Flying = not Flying
-    local char = LP.Character
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    
-    if Flying then
-        local bg = Instance.new("BodyGyro", hrp)
-        bg.P = 9e4
-        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-        bg.cframe = hrp.CFrame
-        
-        local bv = Instance.new("BodyVelocity", hrp)
-        bv.velocity = Vector3.new(0, 0.1, 0)
-        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
-        
-        task.spawn(function()
-            while Flying do
-                local cam = workspace.CurrentCamera
-                local moveDir = char.Humanoid.MoveDirection
+-- =========================
+-- LOOP FARM
+-- =========================
+RunService.Heartbeat:Connect(function()
+    if autoFarm then
+        createPart()
+
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = farmPart.CFrame + Vector3.new(0,3,0)
+        end
+    end
+end)
+
+-- =========================
+-- RESPAWN FIX
+-- =========================
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    if autoFarm and farmPart then
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = farmPart.CFrame + Vector3.new(0,3,0)
+        end
+    end
+end)
+
+-- =========================
+-- ANTI AFK
+-- =========================
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFr
+-- =============================
+-- Toggle Headless
+-- =============================
+ExtraTab:CreateToggle({
+    Name = "หัวกูไปไหนน (Headless)",
+    CurrentValue = false,
+    Callback = function(state)
+        extraStatus.Headless = state
+        applyBodyMod()
+    end
+})
+
+-- =========================
+-- ปุ่มลบความมืด / เพิ่มแสง
+-- =========================
+ExtraTab:CreateButton({
+    Name = "ลบมืดออก",
+    Callback = function()
+        local Lighting = game:GetService("Lighting")
+
+        -- ปรับแสงความจ่าาา
+        Lighting.Ambient = Color3.new(1,1,1)
+        Lighting.OutdoorAmbient = Color3.new(1,1,1)
+        Lighting.Brightness = 3
+        Lighting.ExposureCompensation = 1
+
+        -- ปิด Shadow
+        Lighting.GlobalShadows = false
+
+        -- ลบเอฟเฟกต์มืดทั้งหมด
+        for _, v in pairs(Lighting:GetChildren()) do
+            if v:IsA("ColorCorrectionEffect")
+            or v:IsA("DepthOfFieldEffect")
+            or v:IsA("BloomEffect")
+            or v:IsA("SunRaysEffect")
+            or v:IsA("Atmosphere")
+            or v:IsA("Sky") then
+                v:Destroy()
+            end
+        end
+
+        print("Map สว่างขึ้นแล้วสัส") -- แจ้งเตือนใน Output
+    end
+})
+
+-- =========================
+-- TOGGLE รัน Emote Script (Rayfield)
+-- =========================
+local emoteScriptLoaded = false
+
+ExtraTab:CreateToggle({
+    Name = "เสกทำไม(เสกท่า)",
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            -- เปิด
+            if not emoteScriptLoaded then
+                local url = "https://pastebin.com/raw/rS9i9tmt"
                 
-                -- บินตามทิศทางการหันหน้าจอ
-                if moveDir.Magnitude > 0 then
-                    bv.velocity = cam.CFrame.LookVector * FlySpeed
+                local success, err = pcall(function()
+                    loadstring(game:HttpGet(url))()
+                end)
+
+                if success then
+                    emoteScriptLoaded = true
+                    print("โหลด Emote Script แล้วสัส")
                 else
-                    bv.velocity = Vector3.new(0, 0.1, 0)
+                    warn("รันไม่ได้: "..tostring(err))
                 end
-                bg.cframe = cam.CFrame
-                RunService.RenderStepped:Wait()
+            else
+                print("สคริปมันโหลดไปแล้วนะสัส")
             end
-            bg:Destroy()
-            bv:Destroy()
-        end)
-    end
-end, function()
-    if FlySpeed < 300 then FlySpeed = FlySpeed + 50 else FlySpeed = 50 end
-    print("Fly Speed: "..FlySpeed)
-end)
-
--- 2. Slide Mode (พุ่งตามทิศทาง)
-CreateButton("SLIDE MODE", Color3.fromRGB(0, 150, 100), function()
-    Sliding = not Sliding
-    task.spawn(function()
-        while Sliding do
-            local char = LP.Character
-            local hrp = char:FindFirstChild("HumanoidRootPart")
-            local hum = char:FindFirstChild("Humanoid")
-            if hrp and hum then
-                local moveDir = hum.MoveDirection
-                if moveDir.Magnitude > 0 then
-                    hrp.Velocity = Vector3.new(moveDir.X * SlideSpeed, hrp.Velocity.Y, moveDir.Z * SlideSpeed)
-                else
-                    hrp.Velocity = Vector3.new(hrp.CFrame.LookVector.X * SlideSpeed, hrp.Velocity.Y, hrp.CFrame.LookVector.Z * SlideSpeed)
-                end
-            end
-            RunService.RenderStepped:Wait()
+        else
+            -- ปิด (ทำได้แค่แจ้งเตือน เพราะ Pastebin ส่วนใหญ่ปิดไม่ได้)
+            print("ปิดไม่ได้จริง แค่หยุดใช้เฉยๆสัส")
         end
-    end)
-end, function()
-    if SlideSpeed < 250 then SlideSpeed = SlideSpeed + 50 else SlideSpeed = 50 end
-    print("Slide Speed: "..SlideSpeed)
-end)
-
--- 3. Smooth Spider
-CreateButton("SMOOTH SPIDER", Color3.fromRGB(150, 0, 0), function()
-    if TargetPos then
-        task.spawn(function()
-            for i = 0, 1, 0.05 do
-                if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then break end
-                LP.Character.HumanoidRootPart.CFrame = LP.Character.HumanoidRootPart.CFrame:Lerp(TargetPos, i)
-                task.wait(0.01)
-            end
-        end)
     end
-end, function() TargetPos = LP.Character.HumanoidRootPart.CFrame print("Pos Set!") end)
+})
 
--- 4. Bring All
-CreateButton("BRING ALL", Color3.fromRGB(100, 0, 150), function()
-    BringingAll = not BringingAll
-    task.spawn(function()
-        while BringingAll do
-            for _, p in pairs(Players:GetPlayers()) do
-                if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    p.Character.HumanoidRootPart.CFrame = LP.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -3)
-                end
-            end
-            task.wait(0.3)
+
+-- =========================
+-- ลบ/คืนค่า Barrier & MapBarrier (MainTab)
+-- =========================
+
+local workspace = game:GetService("Workspace")
+
+local hiddenParts = {}
+local deleteToggle = false
+
+-- หา Part ทั้งแมพ
+local function findParts()
+    local found = {}
+
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Name == "Barrier" or obj.Name == "MapBarrier") then
+            table.insert(found, obj)
         end
-    end)
-end)
+    end
 
--- === ระบบเพิ่ม Script อิสระ (+) ===
-local scriptCount = 0
-AddScriptBtn.MouseButton1Click:Connect(function()
-    scriptCount = scriptCount + 1
-    CreateButton("CUSTOM SCRIPT "..scriptCount, Color3.fromRGB(80, 80, 80), function()
-        print("Running Custom Script "..scriptCount)
-        -- ใส่โค้ดที่ต้องการรันตรงนี้
-    end, function() print("Config Script "..scriptCount) end)
+    return found
 end
+
+-- ลบทั้งหมด
+local function deleteAll()
+    for _, part in ipairs(findParts()) do
+        if part and part.Parent and not hiddenParts[part] then
+            hiddenParts[part] = {
+                Parent = part.Parent,
+                CFrame = part.CFrame,
+                Transparency = part.Transparency,
+                CanCollide = part.CanCollide
+            }
+
+            part.Parent = nil
+        end
+    end
+end
+
+-- คืนค่าทั้งหมด
+local function restoreAll()
+    for part, data in pairs(hiddenParts) do
+        if part then
+            pcall(function()
+                part.Parent = data.Parent
+                part.CFrame = data.CFrame
+                part.Transparency = data.Transparency
+                part.CanCollide = data.CanCollide
+            end)
+        end
+    end
+
+    hiddenParts = {}
+end
+
+-- =========================
+-- TOGGLE (MainTab)
+-- =========================
+MainTab:CreateToggle({
+    Name = "ลบ/คืนค่า Barrier",
+    CurrentValue = false,
+    Callback = function(state)
+        deleteToggle = state
+
+        if state then
+            deleteAll()
+            print("ลบ Barrier หมดแล้วสัส")
+        else
+            restoreAll()
+            print("คืนค่า Barrier แล้วสัส")
+        end
+    end
+})
+
+-- =========================
+-- พื้นใส (Reflectance Toggle) - เข้ากับสไตล์ของมึง
+-- =========================
+local floorReflectOn = false
+local originalParts = {}
+
+local function enableFloorReflect()
+	for _, obj in pairs(workspace:GetDescendants()) do
+		if obj:IsA("BasePart") then
+			-- เก็บค่าเดิม
+			if not originalParts[obj] then
+				originalParts[obj] = {
+					Material = obj.Material,
+					Reflectance = obj.Reflectance
+				}
+			end
+			obj.Material = Enum.Material.SmoothPlastic
+			obj.Reflectance = 0.3
+		end
+	end
+end
+
+local function disableFloorReflect()
+	for obj, data in pairs(originalParts) do
+		if obj and obj.Parent then
+			obj.Material = data.Material
+			obj.Reflectance = data.Reflectance
+		end
+	end
+	originalParts = {}
+end
+
+-- =========================
+-- Toggle ใน ExtraTab
+-- =========================
+ExtraTab:CreateToggle({
+	Name = "พื้นใส",
+	CurrentValue = false,
+	Callback = function(state)
+		floorReflectOn = state
+		if state then
+			enableFloorReflect()
+			print("เปิดพื้นใสแล้วสัส")
+		else
+			disableFloorReflect()
+			print("ปิดพื้นใสแล้วสัส")
+		end
+	end
+})
