@@ -1,154 +1,185 @@
--- [[ JANTHIMA HUB - FLOATING ICON VERSION ]] --
-
+-- [[ เกรซจิ HUB - ULTIMATE VERSION ]] --
 local lp = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
+local Lighting = game:GetService("Lighting")
 
 -- สร้าง ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "JanthimaFloatingHub"
-ScreenGui.Parent = (gethui and gethui()) or CoreGui -- รองรับทั้งโปรมือถือและคอม
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Name = "GracieHub"
+ScreenGui.Parent = (gethui and gethui()) or game:GetService("CoreGui")
 
--- 1. สร้างปุ่มวงกลม (Floating Icon)
+-- [ 1. สร้างปุ่มวงกลมเปิด/ปิด ]
 local OpenIcon = Instance.new("ImageButton")
-local UICorner_Icon = Instance.new("UICorner")
-
-OpenIcon.Name = "OpenIcon"
 OpenIcon.Parent = ScreenGui
-OpenIcon.BackgroundColor3 = Color3.fromRGB(255, 170, 0) -- สีส้มทองจันทิมา
-OpenIcon.Position = UDim2.new(0.05, 0, 0.4, 0)
-OpenIcon.Size = UDim2.new(0, 50, 0, 50)
-OpenIcon.Image = "rbxassetid://6031070992" -- รูปวงกลม (เปลี่ยน ID รูปได้)
-OpenIcon.Draggable = true -- ลากปุ่มไปวางที่ไหนก็ได้
+OpenIcon.Size = UDim2.new(0, 60, 0, 60)
+OpenIcon.Position = UDim2.new(0, 10, 0.4, 0)
+OpenIcon.BackgroundColor3 = Color3.fromRGB(255, 85, 255)
+OpenIcon.Image = "rbxassetid://6031070992" 
+local IconCorner = Instance.new("UICorner", OpenIcon)
+IconCorner.CornerRadius = UDim.new(1, 0)
+OpenIcon.Draggable = true
 
-UICorner_Icon.CornerRadius = UDim.new(1, 0)
-UICorner_Icon.Parent = OpenIcon
-
--- 2. สร้างเมนูหลัก (MainFrame)
-local MainFrame = Instance.new("Frame")
-local UICorner_Main = Instance.new("UICorner")
-local UIListLayout = Instance.new("UIListLayout")
-local Title = Instance.new("TextLabel")
-
-MainFrame.Name = "MainFrame"
+-- [ 2. สร้างเมนูหลัก ]
+local MainFrame = Instance.new("ScrollingFrame")
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-MainFrame.Position = UDim2.new(0.5, -100, 0.5, -125)
-MainFrame.Size = UDim2.new(0, 220, 0, 280)
-MainFrame.Visible = false -- เริ่มมาให้ปิดไว้ก่อน
-MainFrame.Active = true
-MainFrame.Draggable = true
+MainFrame.Size = UDim2.new(0, 250, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -175)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Visible = false
+MainFrame.CanvasSize = UDim2.new(0, 0, 2, 0) -- เลื่อนลงได้
+local MainCorner = Instance.new("UICorner", MainFrame)
 
-UICorner_Main.CornerRadius = UDim.new(0, 10)
-UICorner_Main.Parent = MainFrame
+local Layout = Instance.new("UIListLayout", MainFrame)
+Layout.Padding = UDim.new(0, 5)
+Layout.HorizontalAlignment = "Center"
 
-Title.Parent = MainFrame
+local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "🌙 JANTHIMA MENU"
+Title.Text = "🌸 เกรซจิ HUB 🌸"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 18
+Title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 Title.Font = Enum.Font.GothamBold
-Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 
-UIListLayout.Parent = MainFrame
-UIListLayout.Padding = UDim.new(0, 8)
-UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
--- ฟังก์ชันเปิด/ปิดเมนู
+-- เปิด/ปิด
 OpenIcon.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- ฟังก์ชันสร้างปุ่มในเมนู
-local function NewButton(name, color)
-    local btn = Instance.new("TextButton")
-    local corner = Instance.new("UICorner")
-    
-    btn.Name = name .. "Btn"
-    btn.Parent = MainFrame
-    btn.Size = UDim2.new(0, 200, 0, 40)
-    btn.BackgroundColor3 = color or Color3.fromRGB(60, 60, 60)
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Text = name
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 14
-    
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = btn
-    return btn
+-- [ ฟังก์ชันสร้างปุ่ม/Slider ]
+local function CreateButton(txt, cb)
+    local b = Instance.new("TextButton", MainFrame)
+    b.Size = UDim2.new(0, 220, 0, 35)
+    b.Text = txt
+    b.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.MouseButton1Click:Connect(cb)
+    Instance.new("UICorner", b)
+end
+
+local function CreateSlider(name, min, max, cb)
+    local f = Instance.new("Frame", MainFrame)
+    f.Size = UDim2.new(0, 220, 0, 50)
+    f.BackgroundTransparency = 1
+    local t = Instance.new("TextLabel", f)
+    t.Size = UDim2.new(1, 0, 0, 20)
+    t.Text = name .. ": " .. min
+    t.TextColor3 = Color3.fromRGB(255, 255, 255)
+    local s = Instance.new("TextButton", f)
+    s.Size = UDim2.new(1, 0, 0, 10)
+    s.Position = UDim2.new(0, 0, 0.6, 0)
+    s.Text = ""
+    s.MouseButton1Down:Connect(function()
+        local move = RunService.RenderStepped:Connect(function()
+            local mousePos = UIS:GetMouseLocation().X
+            local relativePos = math.clamp((mousePos - s.AbsolutePosition.X) / s.AbsoluteSize.X, 0, 1)
+            local val = math.floor(min + (max - min) * relativePos)
+            t.Text = name .. ": " .. val
+            cb(val)
+        end)
+        UIS.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then move:Disconnect() end
+        end)
+    end)
 end
 
 -- === [ ระบบต่างๆ ] ===
 
--- 1. ปุ่มวาร์ป
-local tpBtn = NewButton("วาร์ปไปหน้า (+)", Color3.fromRGB(45, 120, 200))
-tpBtn.MouseButton1Click:Connect(function()
-    local char = lp.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 0, -12)
+-- 1. ปรับความเร็ว/กระโดด
+CreateSlider("WalkSpeed", 16, 500, function(v) lp.Character.Humanoid.WalkSpeed = v end)
+CreateSlider("JumpPower", 50, 500, function(v) lp.Character.Humanoid.JumpPower = v end)
+CreateSlider("FOV", 70, 120, function(v) workspace.CurrentCamera.FieldOfView = v end)
+
+-- 2. วาร์ปหาคน
+CreateButton("วาร์ปหาคน (สุ่ม)", function()
+    local players = game.Players:GetPlayers()
+    local randomPlayer = players[math.random(1, #players)]
+    if randomPlayer ~= lp then
+        lp.Character.HumanoidRootPart.CFrame = randomPlayer.Character.HumanoidRootPart.CFrame
     end
 end)
 
--- 2. ระบบ Spider (ไถลกำแพง)
-local spiderActive = false
-local sBtn = NewButton("Spider Mode: OFF")
-sBtn.MouseButton1Click:Connect(function()
-    spiderActive = not spiderActive
-    sBtn.Text = "Spider Mode: " .. (spiderActive and "ON" or "OFF")
-    sBtn.BackgroundColor3 = spiderActive and Color3.fromRGB(0, 170, 100) or Color3.fromRGB(60, 60, 60)
-end)
-
--- 3. ระบบ Jump Dash (กระโดดพุ่ง)
-local dashActive = false
-local dBtn = NewButton("Jump Dash: OFF")
-dBtn.MouseButton1Click:Connect(function()
-    dashActive = not dashActive
-    dBtn.Text = "Jump Dash: " .. (dashActive and "ON" or "OFF")
-    dBtn.BackgroundColor3 = dashActive and Color3.fromRGB(0, 170, 100) or Color3.fromRGB(60, 60, 60)
-end)
-
--- 4. ปุ่มบวกขยาย (Expand Option)
-local expandBtn = NewButton("[ + ] แยกฟังก์ชัน", Color3.fromRGB(200, 150, 0))
-local extraBtn = NewButton("วาร์ปหาคน (เร็วๆนี้)", Color3.fromRGB(100, 100, 100))
-extraBtn.Visible = false
-
-expandBtn.MouseButton1Click:Connect(function()
-    extraBtn.Visible = not extraBtn.Visible
-    expandBtn.Text = extraBtn.Visible and "[ - ] ปิดส่วนขยาย" or "[ + ] แยกฟังก์ชัน"
-end)
-
--- === [ Loop การทำงาน ] ===
-RunService.Heartbeat:Connect(function()
-    local char = lp.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    
-    -- Spider Mode Logic
-    if spiderActive then
-        local root = char.HumanoidRootPart
-        local ray = Ray.new(root.Position, root.CFrame.LookVector * 2.5)
-        local part = workspace:FindPartOnRay(ray, char)
-        if part then
-            root.Velocity = Vector3.new(root.Velocity.X, 55, root.Velocity.Z)
+-- 3. ระบบบิน (Fly)
+local flying = false
+CreateButton("Toggle Fly", function()
+    flying = not flying
+    local bodyVel = Instance.new("BodyVelocity")
+    if flying then
+        bodyVel.Parent = lp.Character.HumanoidRootPart
+        bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        RunService.RenderStepped:Connect(function()
+            if flying then bodyVel.Velocity = workspace.CurrentCamera.CFrame.LookVector * 100 end
+        end)
+    else
+        for _,v in pairs(lp.Character.HumanoidRootPart:GetChildren()) do
+            if v:IsA("BodyVelocity") then v:Destroy() end
         end
     end
 end)
 
--- Jump Dash Logic
-lp.CharacterAdded:Connect(function(char)
-    local hum = char:WaitForChild("Humanoid")
-    hum.StateChanged:Connect(function(old, new)
-        if dashActive and new == Enum.HumanoidStateType.Jumping then
-            local root = char:FindFirstChild("HumanoidRootPart")
-            if root then
-                local bv = Instance.new("BodyVelocity", root)
-                bv.MaxForce = Vector3.new(1, 1, 1) * 60000
-                bv.Velocity = root.CFrame.LookVector * 110 -- ความเร็วพุ่ง
-                task.wait(0.2)
-                bv:Destroy()
-            end
+-- 4. เซฟจุดวาร์ป
+local savedPos = nil
+CreateButton("Save Position", function() savedPos = lp.Character.HumanoidRootPart.CFrame end)
+CreateButton("TP to Saved", function() if savedPos then lp.Character.HumanoidRootPart.CFrame = savedPos end end)
+
+-- 5. ESP (แสดงตำแหน่งคน)
+CreateButton("เปิด ESP", function()
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= lp and p.Character then
+            local box = Instance.new("BoxHandleAdornment", p.Character)
+            box.Size = Vector3.new(4,6,1)
+            box.AlwaysOnTop = true
+            box.ZIndex = 10
+            box.Adornee = p.Character
+            box.Transparency = 0.5
+            box.Color3 = Color3.new(1,0,0)
         end
+    end
+end)
+
+-- 6. ระบบ X-Ray
+CreateButton("X-Ray Blocks", function()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") and not v:IsDescendantOf(lp.Character) then
+            v.LocalTransparencyModifier = 0.5
+        end
+    end
+end)
+
+-- 7. กลางวัน/กลางคืน
+CreateButton("Set Day", function() Lighting.TimeOfDay = "12:00:00" end)
+CreateButton("Set Night", function() Lighting.TimeOfDay = "00:00:00" end)
+
+-- 8. Tool วาร์ป (Click TP)
+CreateButton("Get TP Tool", function()
+    local tool = Instance.new("Tool")
+    tool.Name = "วาร์ปเกรซจิ"
+    tool.RequiresHandle = false
+    tool.Activated:Connect(function()
+        lp.Character.HumanoidRootPart.CFrame = CFrame.new(lp:GetMouse().Hit.p + Vector3.new(0,3,0))
     end)
+    tool.Parent = lp.Backpack
 end)
 
+-- 9. F3X Tool
+CreateButton("Get F3X", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+    -- ปล: ส่วนใหญ่ต้องโหลดผ่านสคริปต์ภายนอก หรือใช้คำสั่งเฉพาะเกม
+end)
+
+-- 10. ระบบเพลง (ID)
+local sound = Instance.new("Sound", workspace)
+CreateButton("Play Music (ใส่ ID ในโค้ด)", function()
+    sound.SoundId = "rbxassetid://1837879017" -- เปลี่ยน ID ตรงนี้
+    sound:Play()
+end)
+
+-- 11. Hitbox (เพิ่มขนาดตัวคนอื่นให้ตีง่าย)
+CreateButton("Big Hitbox (ตีง่าย)", function()
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= lp and v.Character then
+            v.Character.HumanoidRootPart.Size = Vector3.new(10, 10, 10)
+            v.Character.HumanoidRootPart.Transparency = 0.7
+        end
+    end
+end)
