@@ -1,43 +1,66 @@
+local UIS = game:GetService("UserInputService")
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local rootPart = character:WaitForChild("HumanoidRootPart")
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
+local humanoid = character:WaitForChild("Humanoid")
 
--- อ้างอิงตำแหน่ง (แก้ชื่อใน "" ให้ตรงกับที่คุณตั้งใน Explorer)
+-- อ้างอิง UI (แก้ชื่อให้ตรงกับใน Explorer ของคุณ)
 local screenGui = script.Parent
-local mainFrame = screenGui:WaitForChild("MainFrame") 
-local openBtn = screenGui:WaitForChild("OpenButton")
-local tpBtn = mainFrame:WaitForChild("TeleportBtn")
-local spiderBtn = mainFrame:WaitForChild("SpiderBtn")
+local mainFrame = screenGui:WaitForChild("MainFrame")
+local dashToggleBtn = mainFrame:WaitForChild("DashToggleBtn")
+local speedInput = mainFrame:WaitForChild("SpeedInput") -- ช่องใส่ความเร็ว
+local expandBtn = mainFrame:WaitForChild("ExpandBtn") -- ปุ่ม +
+local extraDashBtn = mainFrame:WaitForChild("ExtraDashBtn") -- ปุ่มย่อยที่แยกมา
 
--- 1. ระบบ เปิด/ปิด UI
-openBtn.MouseButton1Click:Connect(function()
-	mainFrame.Visible = not mainFrame.Visible
-	print("Menu Toggled!") -- เช็คใน Output ว่าทำงานไหม
+-- ตัวแปรตั้งค่า
+local dashEnabled = false
+local dashSpeed = 100 -- ค่าเริ่มต้น
+local isExpanded = false
+
+-- === 1. ระบบขยายปุ่ม (ปุ่มบวก) ===
+extraDashBtn.Visible = false -- เริ่มมาให้ปุ่มย่อยซ่อนไว้
+expandBtn.MouseButton1Click:Connect(function()
+	isExpanded = not isExpanded
+	extraDashBtn.Visible = isExpanded
+	expandBtn.Text = isExpanded and "-" or "+" -- เปลี่ยนสัญลักษณ์ปุ่ม
 end)
 
--- 2. ระบบ Teleport ไปข้างหน้า
-tpBtn.MouseButton1Click:Connect(function()
-	rootPart.CFrame = rootPart.CFrame * CFrame.new(0, 0, -5)
-end)
-
--- 3. ระบบ Spider Mode
-local spiderActive = false
-spiderBtn.MouseButton1Click:Connect(function()
-	spiderActive = not spiderActive
-	spiderBtn.BackgroundColor3 = spiderActive and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-end)
-
-RunService.Heartbeat:Connect(function()
-	if spiderActive then
-		local raycastParams = RaycastParams.new()
-		raycastParams.FilterDescendantsInstances = {character}
-		local raycastResult = workspace:Raycast(rootPart.Position, rootPart.CFrame.LookVector * 2.5, raycastParams)
-
-		if raycastResult then
-			rootPart.Velocity = Vector3.new(rootPart.Velocity.X, 50, rootPart.Velocity.Z)
+-- === 2. ระบบปรับความเร็ว (จากช่อง TextBox) ===
+speedInput.FocusLost:Connect(function(enterPressed)
+	if enterPressed then
+		local num = tonumber(speedInput.Text)
+		if num then
+			dashSpeed = num
+			print("ปรับความเร็วพุ่งเป็น: " .. dashSpeed)
+		else
+			speedInput.Text = "ใส่ตัวเลข!"
 		end
 	end
 end)
 
+-- === 3. โหมดเปิด/ปิด Jump Dash ===
+dashToggleBtn.MouseButton1Click:Connect(function()
+	dashEnabled = not dashEnabled
+	dashToggleBtn.BackgroundColor3 = dashEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+end)
+
+-- ปุ่มย่อย (Extra) ก็ใช้เปิดปิดโหมดเดียวกันได้
+extraDashBtn.MouseButton1Click:Connect(function()
+	dashEnabled = not dashEnabled
+	print("Toggle ผ่านปุ่มย่อย!")
+end)
+
+-- === 4. ระบบคำนวณการกระโดดแล้วพุ่ง ===
+humanoid.StateChanged:Connect(function(oldState, newState)
+	if dashEnabled and newState == Enum.HumanoidStateType.Jumping then
+		-- สร้างแรงพุ่ง (BodyVelocity)
+		local bv = Instance.new("BodyVelocity")
+		bv.MaxForce = Vector3.new(1, 1, 1) * 50000 -- แรงดัน
+		-- พุ่งไปตามทิศทางที่ตัวละครหันหน้า
+		bv.Velocity = rootPart.CFrame.LookVector * dashSpeed 
+		bv.Parent = rootPart
+		
+		wait(0.2) -- ระยะเวลาที่พุ่ง (สั้นๆ เพื่อให้เป็น Dash)
+		bv:Destroy()
+	end
+end)
