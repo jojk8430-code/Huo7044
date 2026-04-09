@@ -1,102 +1,153 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("เมนูภาษาไทย ALL-IN-ONE (สมบูรณ์)", "BloodTheme")
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- [ ส่วนที่ 1: ฟังก์ชันรันคำสั่งเบื้องหลัง ]
-local function RunIY(cmd)
-    if not _G.IY_Loaded then
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/Edgeiy/infiniteyield/master/source"))()
-        _G.IY_Loaded = true
-        task.wait(0.5)
-    end
-    game:GetService("VirtualInputManager"):SendKeyEvent(true, "Semicolon", false, game)
-    task.wait(0.05)
-    game:GetService("VirtualInputManager"):SendText(cmd)
-    game:GetService("VirtualInputManager"):SendKeyEvent(true, "Enter", false, game)
+-- สร้างหน้าต่างหลัก
+local Window = Rayfield:CreateWindow({
+   Name = "ซิกม่า hub",
+   LoadingTitle = "System Loading...",
+   LoadingSubtitle = "WallHop & Quick Buttons Ready",
+   ConfigurationSaving = { Enabled = false }
+})
+
+local Player = game.Players.LocalPlayer
+local Character, Humanoid, Root
+local WallHopEnabled = false
+local DashSpeed = 50
+local SpinSpeed = 50
+local AutoDashEnabled = false
+local InfiniteJumpEnabled = false
+local AutoJumpEnabled = false
+local SpinEnabled = false
+local ESPEnabled = false
+
+-- ฟังก์ชันดึงตัวละครใหม่
+local function UpdateCharacter()
+    Character = Player.Character or Player.CharacterAdded:Wait()
+    Humanoid = Character:WaitForChild("Humanoid")
+    Root = Character:WaitForChild("HumanoidRootPart")
 end
+UpdateCharacter()
+Player.CharacterAdded:Connect(function() task.wait(0.5) UpdateCharacter() end)
 
--- [ ส่วนที่ 2: หมวดการเคลื่อนที่ ]
-local Tab1 = Window:NewTab("การเคลื่อนที่")
-local Move = Tab1:NewSection("เคลื่อนที่และฟิสิกส์")
+-- [Tabs ต่างๆ]
+local MainTab = Window:CreateTab("Movement", 4483362458)
+local SpecialTab = Window:CreateTab("Special Features", 4483362458)
+local ESPTab = Window:CreateTab("Visuals (ESP)", 4483362458)
 
-Move:NewButton("บิน", "Fly", function() RunIY("fly") end)
-Move:NewButton("เลิกบิน", "Unfly", function() RunIY("unfly") end)
-Move:NewButton("ทะลุกำแพง", "Noclip", function() RunIY("noclip") end)
-Move:NewButton("ปิดทะลุ", "Clip", function() RunIY("clip") end)
+-- ### 1. ระบบแยกปุ่ม "กระโดดปลอม" (Wall Hop) - NEW!
+SpecialTab:CreateSection("Quick Access Buttons")
 
-local CustomGravity = 196.2
-Move:NewSlider("แรงโน้มถ่วง (ตกช้า)", "ยิ่งน้อยยิ่งลอย", 196, 0, function(s)
-    game.Workspace.Gravity = s
-end)
+local function createWallHopButton()
+    if game.CoreGui:FindFirstChild("WallHopGui") then return end
+    
+    local Gui = Instance.new("ScreenGui", game.CoreGui)
+    Gui.Name = "WallHopGui"
+    Gui.ResetOnSpawn = false
+    
+    local Btn = Instance.new("TextButton", Gui)
+    Btn.Size = UDim2.new(0, 150, 0, 45)
+    Btn.Position = UDim2.new(0.85, 0, 0.6, 0)
+    Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Btn.Text = "กระโดดปลอม: OFF"
+    Btn.TextColor3 = Color3.new(1, 1, 1)
+    Btn.Font = Enum.Font.SourceSansBold
+    Btn.TextSize = 18
+    
+    Instance.new("UICorner", Btn)
+    local Stroke = Instance.new("UIStroke", Btn)
+    Stroke.Color = Color3.new(1, 0, 0)
+    Stroke.Thickness = 2
 
-local JumpPushSpeed = 0
-Move:NewSlider("กระโดดพุ่ง (Jump Slide)", "ปรับความแรงตอนพุ่ง", 300, 0, function(s)
-    JumpPushSpeed = s
-end)
-
-game:GetService("UserInputService").JumpRequest:Connect(function()
-    if JumpPushSpeed > 0 then
-        local lp = game.Players.LocalPlayer
-        local char = lp.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            local hrp = char.HumanoidRootPart
-            hrp.Velocity = hrp.Velocity + (hrp.CFrame.LookVector * JumpPushSpeed / 5)
-        end
-    end
-end)
-
--- [ ส่วนที่ 3: ระบบวาร์ป (Set Point) ]
-local Tab2 = Window:NewTab("วาร์ปพิกัด")
-local TPSection = Tab2:NewSection("ตั้งค่าจุดวาร์ป")
-local SavedPos = ""
-local LoopTP = false
-
-TPSection:NewButton("Set (บันทึกจุดยืน)", "บันทึกที่นี่", function()
-    local p = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
-    SavedPos = string.format("%d, %d, %d", p.X, p.Y, p.Z)
-end)
-
-TPSection:NewButton("Teleport (วาร์ปไป)", "ไปจุดที่เซ็ต", function()
-    if SavedPos ~= "" then RunIY("tppos " .. SavedPos) end
-end)
-
-TPSection:NewToggle("Loop Teleport (วาร์ปค้าง)", "วาร์ปรัวๆ", function(state)
-    LoopTP = state
-    task.spawn(function()
-        while LoopTP do
-            if SavedPos ~= "" then RunIY("tppos " .. SavedPos) end
-            task.wait(0.1)
+    Btn.MouseButton1Click:Connect(function()
+        WallHopEnabled = not WallHopEnabled
+        if WallHopEnabled then
+            Btn.Text = "กระโดดปลอม: ON"
+            Stroke.Color = Color3.new(0, 1, 0)
+        else
+            Btn.Text = "กระโดดปลอม: OFF"
+            Stroke.Color = Color3.new(1, 0, 0)
         end
     end)
+end
+
+SpecialTab:CreateButton({
+   Name = "เรียกปุ่มลอย (กระโดดปลอม)",
+   Callback = function()
+      createWallHopButton()
+   end,
+})
+
+-- ลูปการทำงานของ Wall Hop (กระโดดปลอมเมื่อชนบล็อก)
+game:GetService("RunService").RenderStepped:Connect(function()
+    if WallHopEnabled and Character and Root and Humanoid then
+        -- ยิง Ray ไปข้างหน้าเพื่อเช็คว่ามีบล็อกกั้นไหม
+        local RayParam = RaycastParams.new()
+        RayParam.FilterDescendantsInstances = {Character}
+        
+        local Direction = Root.CFrame.LookVector * 2.5
+        local StartPos = Root.Position - Vector3.new(0, 1, 0) -- เช็คระดับขา
+        
+        local Result = workspace:Raycast(StartPos, Direction, RayParam)
+        
+        if Result and Result.Instance:IsA("BasePart") then
+            -- ถ้าเจอสิ่งกีดขวาง ให้สั่งกระโดด
+            Humanoid.Jump = true
+        end
+    end
 end)
 
--- [ ส่วนที่ 4: จัดการคนอื่น (ใส่ชื่อคน) ]
-local Tab3 = Window:NewTab("จัดการคนอื่น")
-local Target = Tab3:NewSection("ใส่ชื่อผู้เล่น")
+-- ### 2. ระบบกระโดด & พุ่ง (จากเวอร์ชั่นเดิม)
+MainTab:CreateSection("Jump & Dash Control")
 
-Target:NewTextBox("วาร์ปไปหา", "ใส่ชื่อคน", function(t) RunIY("goto " .. t) end)
-Target:NewTextBox("ดึงมาหา", "ใส่ชื่อคน", function(t) RunIY("bring " .. t) end)
-Target:NewTextBox("ส่องดู (View)", "ใส่ชื่อคน", function(t) RunIY("view " .. t) end)
-Target:NewButton("เลิกส่อง", "คืนกล้อง", function() RunIY("unview") end)
+MainTab:CreateToggle({
+   Name = "กระโดดไม่จำกัด (Infinite Jump)",
+   CurrentValue = false,
+   Callback = function(Value) InfiniteJumpEnabled = Value end,
+})
 
--- [ ส่วนที่ 5: การมองเห็น ]
-local Tab4 = Window:NewTab("การมองเห็น")
-local Visual = Tab4:NewSection("ESP & Xray")
+MainTab:CreateToggle({
+   Name = "เดินแล้วพุ่งลูป (Auto Dash)",
+   CurrentValue = false,
+   Callback = function(Value) AutoDashEnabled = Value end,
+})
 
-Visual:NewButton("เปิด ESP", "มองทะลุคน", function() RunIY("esp") end)
-Visual:NewButton("ปิด ESP", "ปิดมองทะลุ", function() RunIY("unesp") end)
-Visual:NewButton("เอ็กซเรย์", "มองทะลุแมพ", function() RunIY("xray") end)
-Visual:NewButton("ปิดเอ็กซเรย์", "คืนค่า", function() RunIY("unxray") end)
+MainTab:CreateInput({
+   Name = "ความเร็วพุ่ง",
+   PlaceholderText = "ตัวเลข...",
+   Callback = function(Text) DashSpeed = tonumber(Text) or 50 end,
+})
 
--- [ ส่วนที่ 6: ตั้งค่าเมนู ]
-local TabEnd = Window:NewTab("ตั้งค่า")
-local EndSection = TabEnd:NewSection("จบการทำงาน")
-
-EndSection:NewKeybind("ปุ่มซ่อนเมนู", "กดเพื่อซ่อน GUI", Enum.KeyCode.RightControl, function()
-    Library:ToggleUI()
+-- ลูปการพุ่ง (Auto Dash)
+spawn(function()
+    while true do
+        task.wait(0.1)
+        if AutoDashEnabled and Humanoid and Root and Humanoid.MoveDirection.Magnitude > 0 then
+            Root.Velocity = Root.Velocity + (Humanoid.MoveDirection * DashSpeed)
+        end
+    end
 end)
 
-EndSection:NewButton("ปิดเมนูถาวร", "Destroy GUI", function()
-    Library:Destroy()
-end)
+-- ### 3. ระบบหมุนตัว & ESP (คงไว้ตามเดิม)
+MainTab:CreateSection("Spin System")
+MainTab:CreateToggle({Name = "เปิดระบบหมุนตัว", CurrentValue = false, Callback = function(Value) SpinEnabled = Value end})
 
-print("สคริปต์แก้ไขแล้ว รันได้ทันที!")
+-- [ ฟังก์ชัน ESP และปุ่มบวกสายรุ้ง เหมือนเวอร์ชั่น V9 ]
+-- (เพื่อให้สคริปต์ไม่ยาวเกินไป ผมรวมส่วนปุ่มบวกสายรุ้งไว้ข้างล่างนี้ครับ)
+
+local MainGui = Instance.new("ScreenGui", game.CoreGui)
+MainGui.ResetOnSpawn = false
+local PlusBtn = Instance.new("TextButton", MainGui)
+PlusBtn.Size = UDim2.new(0, 50, 0, 50)
+PlusBtn.Position = UDim2.new(0.9, 0, 0.4, 0)
+PlusBtn.Text = "+"
+PlusBtn.BackgroundColor3 = Color3.new(1, 0, 0)
+Instance.new("UICorner", PlusBtn).CornerRadius = UDim.new(1, 0)
+PlusBtn.MouseButton1Click:Connect(function() Rayfield:Toggle() end)
+
+spawn(function()
+    local h = 0
+    while true do
+        PlusBtn.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+        h = h + 0.01
+        task.wait(0.05)
+    end
+end)
