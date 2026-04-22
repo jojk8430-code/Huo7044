@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Roblox Credit System</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
+        h2 { color: #333; }
+        .credit-display { font-size: 1.2em; color: #28a745; margin: 10px 0; font-weight: bold; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background-color: #0056b3; }
+        .qr-section { margin-top: 20px; display: none; border-top: 1px solid #eee; padding-top: 20px; }
+        #qrImage { width: 200px; height: 200px; margin-bottom: 10px; }
+        #status { font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Roblox Code Sender</h2>
+    <div class="credit-display">เครดิตของคุณ: <span id="userCredit">0</span> บาท</div>
+    
+    <hr>
+    
+    <div id="topup-section">
+        <p>เติมเงิน (1 บาท = 1 เครดิต)</p>
+        <input type="number" id="amount" placeholder="ระบุจำนวนเงินที่ต้องการเติม" min="1">
+        <button onclick="generateTopupQR()" style="background-color: #28a745;">สร้าง QR Code เติมเงิน</button>
+    </div>
+
+    <div id="qr-section" class="qr-section">
+        <p>สแกนเพื่อเติมเงิน</p>
+        <img id="qrImage" src="" alt="PromptPay QR Code">
+        <p>เมื่อโอนเสร็จแล้ว กดปุ่มยืนยัน</p>
+        <button onclick="confirmTopup()">ฉันโอนเงินแล้ว (ยืนยันเครดิต)</button>
+    </div>
+
+    <hr>
+
+    <div id="action-section">
+        <p>ใช้ 10 เครดิต เพื่อสุ่ม 10 ข้อความ</p>
+        <input type="text" id="gameName" placeholder="ใส่ชื่อเกม (roblox)">
+        <button onclick="processAndSend()">หักเครดิต & ส่งไป Discord</button>
+    </div>
+    
+    <div id="status"></div>
+</div>
+
+<script>
+    let currentCredit = 0;
+    const MY_PHONE = "0639413009"; // เบอร์นี้จะถูกเก็บในตัวแปร ไม่แสดงบน UI
+    const WEBHOOK_URL = "ใส่_URL_WEBHOOK_ตรงนี้";
+
+    // ฟังก์ชันสร้าง QR Code
+    function generateTopupQR() {
+        const amount = document.getElementById('amount').value;
+        const qrSection = document.getElementById('qr-section');
+        const qrImage = document.getElementById('qrImage');
+
+        if (amount < 1) {
+            alert("กรุณาระบุจำนวนเงินที่ถูกต้อง");
+            return;
+        }
+
+        // ใช้ API ของ PromptPay.io เพื่อสร้างรูปภาพ QR Code
+        // รูปแบบ: https://promptpay.io/{เบอร์}/{จำนวนเงิน}.png
+        qrImage.src = `https://promptpay.io/${MY_PHONE}/${amount}.png`;
+        qrSection.style.display = 'block';
+        document.getElementById('status').innerText = "สร้าง QR Code สำเร็จ กรุณาสแกนจ่าย";
+    }
+
+    // ฟังก์ชันยืนยันการเติมเงิน (ในระบบจริงต้องตรวจสอบผ่าน API ธนาคาร)
+    function confirmTopup() {
+        const amount = parseInt(document.getElementById('amount').value);
+        currentCredit += amount;
+        document.getElementById('userCredit').innerText = currentCredit;
+        document.getElementById('qr-section').style.display = 'none';
+        document.getElementById('status').style.color = "green";
+        document.getElementById('status').innerText = `เติมเงินสำเร็จ! ยอดปัจจุบัน ${currentCredit} บาท`;
+    }
+
+    function generateRandomString(length) {
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+
+    async function processAndSend() {
+        const gameName = document.getElementById('gameName').value.trim().toLowerCase();
+        const statusDiv = document.getElementById('status');
+
+        // 1. เช็กชื่อเกม
+        if (gameName !== "roblox") {
+            statusDiv.style.color = "red";
+            statusDiv.innerText = "❌ ชื่อเกมต้องเป็น roblox เท่านั้น";
+            return;
+        }
+
+        // 2. เช็กเครดิต (สมมติว่าค่าส่งครั้งละ 10 เครดิต)
+        const cost = 10;
+        if (currentCredit < cost) {
+            statusDiv.style.color = "red";
+            statusDiv.innerText = `❌ เครดิตไม่พอ (ต้องการ ${cost} บาท)`;
+            return;
+        }
+
+        // 3. เริ่มส่ง
+        currentCredit -= cost;
+        document.getElementById('userCredit').innerText = currentCredit;
+        statusDiv.style.color = "orange";
+        statusDiv.innerText = "กำลังหักเครดิตและส่งข้อมูล...";
+
+        let randomCodes = [];
+        for (let i = 0; i < 10; i++) {
+            randomCodes.push(generateRandomString(10));
+        }
+
+        const message = {
+            content: `**[NEW ORDER]**\n**Game:** ${gameName}\n**Credits Used:** ${cost} THB\n**Remaining:** ${currentCredit} THB\n**Codes:**\n${randomCodes.map(c => `\`${c}\``).join(', ')}`
+        };
+
+        try {
+            await fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(message)
+            });
+            statusDiv.style.color = "green";
+            statusDiv.innerText = "✅ ส่งข้อมูลเรียบร้อย! (หัก 10 เครดิต)";
+        } catch (e) {
+            statusDiv.style.color = "red";
+            statusDiv.innerText = "❌ เกิดข้อผิดพลาดในการส่ง";
+        }
+    }
+</script>
+
+</body>
+</html>
+
