@@ -1,8 +1,100 @@
--- สคริปต์สแกนหาเพลงที่กำลังเล่นอยู่ในแมพ พร้อมบอกชื่อและ ID
-local SoundService = game:GetService("SoundService")
+-- [[ UNIVERSAL SOUND SCANNER & COPIER GUI ]] --
+
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
 local MarketplaceService = game:GetService("MarketplaceService")
 
--- ฟังก์ชันดึงชื่อเพลงจาก ID (เพราะในไฟล์ Sound ส่วนใหญ่จะมีแค่ ID ไม่มีชื่อภาษาไทย/อังกฤษบอกตรงๆ)
+-- 1. สร้างหน้าตา UI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SoundScannerGui"
+-- ตรวจสอบเพื่อไม่ให้แสดงผลทับซ้อนในระบบทั่วไป
+if syn and syn.protect_gui then syn.protect_gui(ScreenGui) end
+ScreenGui.Parent = CoreGui
+
+-- หน้าต่างหลัก (Main Frame)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 350, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -175, 0.4, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true -- ทำให้ลากเลื่อนหน้าต่างได้
+MainFrame.Parent = ScreenGui
+
+-- มุมโค้งมนของหน้าต่าง
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = MainFrame
+
+-- หัวข้อ (Title)
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+Title.Text = "🎵 Sound Scanner & Copier"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 16
+Title.Font = Enum.Font.SourceSansBold
+Title.Parent = MainFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 10)
+TitleCorner.Parent = Title
+
+-- ปุ่มสแกน/ดูดเพลง (Scan Button)
+local ScanButton = Instance.new("TextButton")
+ScanButton.Size = UDim2.new(0.9, 0, 0, 45)
+ScanButton.Position = UDim2.new(0.05, 0, 0, 55)
+ScanButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+ScanButton.Text = "🔍 กดเพื่อดูดเพลงในแมพ"
+ScanButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ScanButton.TextSize = 16
+ScanButton.Font = Enum.Font.SourceSansBold
+ScanButton.Parent = MainFrame
+
+local ButtonCorner = Instance.new("UICorner")
+ButtonCorner.CornerRadius = UDim.new(0, 8)
+ButtonCorner.Parent = ScanButton
+
+-- พื้นที่แสดงรายการเพลง (Scrolling Frame)
+local ScrollContainer = Instance.new("ScrollingFrame")
+ScrollContainer.Size = UDim2.new(0.9, 0, 0, 270)
+ScrollContainer.Position = UDim2.new(0.05, 0, 0, 115)
+ScrollContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+ScrollContainer.BorderSizePixel = 0
+ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollContainer.ScrollBarThickness = 6
+ScrollContainer.Parent = MainFrame
+
+local ScrollCorner = Instance.new("UICorner")
+ScrollCorner.CornerRadius = UDim.new(0, 8)
+ScrollCorner.Parent = ScrollContainer
+
+-- จัดระเบียบรายการเพลงให้อยู่เป็นระเบียบลงมาข้างล่าง
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.Padding = UDim.new(0, 5)
+ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ListLayout.Parent = ScrollContainer
+
+-- ปุ่มปิด GUI (Close Button)
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -35, 0, 5)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 14
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.Parent = MainFrame
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 5)
+CloseCorner.Parent = CloseButton
+
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+--- 2. ระบบดึงชื่อเพลงและตรวจสอบ ID
 local function getSongName(assetId)
     local success, info = pcall(function()
         return MarketplaceService:GetProductInfo(assetId, Enum.InfoType.Asset)
@@ -10,27 +102,111 @@ local function getSongName(assetId)
     if success and info then
         return info.Name
     else
-        return "ไม่สามารถดึงชื่อเพลงได้ (อาจโดนลบหรือติดลิขสิทธิ์)"
+        return "Unknown Song / ติดลิขสิทธิ์"
     end
 end
 
--- ไล่หาไฟล์เสียงทั้งหมดในเกมที่กำลังเปิดอยู่
-for _, v in pairs(game:GetDescendants()) do
-    if v:IsA("Sound") and v.IsPlaying and v.Volume > 0 then
-        -- แปลงรูปแบบ SoundId (เช่น rbxassetid://123456 ให้เหลือแค่ตัวเลข)
-        local rawId = string.match(v.SoundId, "%d+")
-        if rawId then
-            local songId = tonumber(rawId)
-            local songName = getSongName(songId)
-            
-            -- แสดงผลลัพธ์ออกมาในช่อง Console (กด F9 ในเกมเพื่อดู)
-            print("=============================")
-            print("เจอเพลงที่กำลังเปิด! 🎵")
-            print("ชื่อเพลง: " .. songName)
-            print("ID เพลง: " .. songId)
-            print("ตำแหน่งไฟล์: " .. v:GetFullName())
-            print("=============================")
+-- ฟังก์ชันสร้างแถบรายชื่อเพลงในหน้าต่าง UI
+local function createSongItem(name, id)
+    local ItemFrame = Instance.new("Frame")
+    ItemFrame.Size = UDim2.new(1, -10, 0, 50)
+    ItemFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    ItemFrame.BorderSizePixel = 0
+    
+    local ItemCorner = Instance.new("UICorner")
+    ItemCorner.CornerRadius = UDim.new(0, 5)
+    ItemCorner.Parent = ItemFrame
+    
+    -- ข้อความแสดงชื่อเพลงและ ID
+    local SongText = Instance.new("TextLabel")
+    SongText.Size = UDim2.new(0.7, 0, 1, 0)
+    SongText.Position = UDim2.new(0, 10, 0, 0)
+    SongText.BackgroundTransparency = 1
+    SongText.Text = "🎵 " .. name .. "\nID: " .. id
+    SongText.TextColor3 = Color3.fromRGB(230, 230, 230)
+    SongText.TextSize = 12
+    SongText.TextXAlignment = Enum.TextXAlignment.Left
+    SongText.Font = Enum.Font.SourceSans
+    SongText.Parent = ItemFrame
+    
+    -- ปุ่มกดคัดลอก (Copy Button)
+    local CopyBtn = Instance.new("TextButton")
+    CopyBtn.Size = UDim2.new(0.25, 0, 0.7, 0)
+    CopyBtn.Position = UDim2.new(0.72, 0, 0.15, 0)
+    CopyBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+    CopyBtn.Text = "Copy ID"
+    CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CopyBtn.TextSize = 12
+    CopyBtn.Font = Enum.Font.SourceSansBold
+    CopyBtn.Parent = ItemFrame
+    
+    local CopyCorner = Instance.new("UICorner")
+    CopyCorner.CornerRadius = UDim.new(0, 5)
+    CopyCorner.Parent = CopyBtn
+    
+    -- เมื่อกดปุ่มจะ Copy ลง Clipboard ของผู้เล่นทันที
+    CopyBtn.MouseButton1Click:Connect(function()
+        if setclipboard then
+            setclipboard(tostring(id))
+            CopyBtn.Text = "Copied! ✔"
+            CopyBtn.BackgroundColor3 = Color3.fromRGB(39, 174, 96)
+            task.wait(1.5)
+            CopyBtn.Text = "Copy ID"
+            CopyBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+        else
+            CopyBtn.Text = "No Clipboard Support"
+            CopyBtn.BackgroundColor3 = Color3.fromRGB(192, 41, 43)
+        end
+    end)
+    
+    ItemFrame.Parent = ScrollContainer
+    ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y)
+end
+
+--- 3. ฟังก์ชันสแกนหาเพลงในเกม
+ScanButton.MouseButton1Click:Connect(function()
+    -- ล้างข้อมูลเก่าในหน้าต่างออกก่อนสแกนใหม่
+    for _, child in pairs(ScrollContainer:GetChildren()) do
+        if child:IsA("Frame") then
+            child:Destroy()
         end
     end
-end
-
+    
+    ScanButton.Text = "⏳ กำลังสแกนหาเพลง..."
+    ScanButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    task.wait(0.5) -- หน่วงเวลานิดหน่อยให้สมจริง
+    
+    local foundSongs = {}
+    local totalFound = 0
+    
+    -- ค้นหาไฟล์ Sound ทั้งหมดในทุกมุมของเซิร์ฟเวอร์ (Workspace, SoundService ฯลฯ)
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("Sound") and v.IsPlaying and v.Volume > 0 then
+            local rawId = string.match(v.SoundId, "%d+")
+            if rawId then
+                local songId = tonumber(rawId)
+                -- ตรวจสอบไม่ให้ชื่อซ้ำกันในการสแกนรอบนั้นๆ
+                if not foundSongs[songId] then
+                    foundSongs[songId] = true
+                    totalFound = totalFound + 1
+                    
+                    local songName = getSongName(songId)
+                    createSongItem(songName, songId)
+                end
+            end
+        end
+    end
+    
+    -- อัปเดตข้อความบนปุ่มหลังจากสแกนเสร็จ
+    if totalFound > 0 then
+        ScanButton.Text = "✔ เจอทั้งหมด " .. totalFound .. " เพลง! (กดสแกนใหม่ได้)"
+        ScanButton.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+    else
+        ScanButton.Text = "❌ ไม่พบเพลงที่เปิดอยู่ ลองใหม่อีกครั้ง"
+        ScanButton.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
+    end
+    
+    task.wait(2)
+    ScanButton.Text = "🔍 กดเพื่อดูดเพลงในแมพ"
+    ScanButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+end)
