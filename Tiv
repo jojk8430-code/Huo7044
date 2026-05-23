@@ -1,0 +1,250 @@
+-- [[ AUDIO FARMER V2: ACCURATE SCANNER + ANTI-AUDIO STEAL + AUTO HOP ]] --
+
+local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1507683202800549948/mNVMyw5s9_gRZEO0INegC8e2NCU27-kwTZBjUtfCHMox_nPerbQQ7bMid6wmzEylgMz1"
+local TIME_BEFORE_HOP = 30 
+local ANTI_STEAL_ACTIVE = true -- 🛡️ ตั้งเป็น true เพื่อเปิดระบบกันคนอื่นดูดเพลงของเรา
+
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local MarketplaceService = game:GetService("MarketplaceService")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local VirtualUser = game:GetService("VirtualUser")
+local LocalPlayer = Players.LocalPlayer
+
+local filename = "MusicFarmer_LoggedSongsV2.json"
+local LoggedSongs = {}
+if readfile and isfile and isfile(filename) then
+    pcall(function() LoggedSongs = HttpService:JSONDecode(readfile(filename)) end)
+end
+
+-- 🛡️ [SYSTEM 1: ANTI-AUDIO STEAL] ระบบป้องกันคนอื่นดูดเพลงของเรา
+if ANTI_STEAL_ACTIVE then
+    task.spawn(function()
+        game:GetDescendantsInstanceAddedSignal("Sound"):Connect(function(sound)
+            if sound:IsDescendantOf(LocalPlayer.Character) or sound.Name == "Boombox" or sound.Name == "Radio" then
+                sound:GetPropertyChangedSignal("SoundId"):Connect(function()
+                    if sound.SoundId ~= "" then
+                        task.wait(0.1)
+                        sound.SoundId = "rbxassetid://0" 
+                    end
+                end)
+            end
+        end)
+    end)
+    print("🛡️ ระบบกันดูดเพลง (Anti-Audio Steal) เริ่มทำงานแล้ว!")
+end
+
+-- สร้างหน้าตา UI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AudioFarmerV2"
+if syn and syn.protect_gui then syn.protect_gui(ScreenGui) end
+ScreenGui.Parent = CoreGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 350, 0, 440)
+MainFrame.Position = UDim2.new(0.5, -175, 0.4, -220)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+Title.Text = "🤖 ROBLOX AUDIO FARMER V2 (ACCURATE)"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 12
+Title.Font = Enum.Font.SourceSansBold
+Title.Parent = MainFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 10)
+TitleCorner.Parent = Title
+
+local FarmButton = Instance.new("TextButton")
+FarmButton.Size = UDim2.new(0.9, 0, 0, 40)
+FarmButton.Position = UDim2.new(0.05, 0, 0, 50)
+FarmButton.BackgroundColor3 = Color3.fromRGB(192, 57, 43)
+FarmButton.Text = "❌ โหมดฟาร์มข้ามเซิร์ฟเวอร์: ปิดอยู่"
+FarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FarmButton.TextSize = 14
+FarmButton.Font = Enum.Font.SourceSansBold
+FarmButton.Parent = MainFrame
+
+local FarmCorner = Instance.new("UICorner")
+FarmCorner.CornerRadius = UDim.new(0, 8)
+FarmCorner.Parent = FarmButton
+
+local TimerLabel = Instance.new("TextLabel")
+TimerLabel.Size = UDim2.new(0.9, 0, 0, 20)
+TimerLabel.Position = UDim2.new(0.05, 0, 0, 95)
+TimerLabel.BackgroundTransparency = 1
+TimerLabel.Text = "สถานะ: รอสั่งเปิดโหมดฟาร์ม..."
+TimerLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+TimerLabel.TextSize = 12
+TimerLabel.Font = Enum.Font.SourceSans
+TimerLabel.Parent = MainFrame
+
+local ScrollContainer = Instance.new("ScrollingFrame")
+ScrollContainer.Size = UDim2.new(0.9, 0, 0, 260)
+ScrollContainer.Position = UDim2.new(0.05, 0, 0, 125)
+ScrollContainer.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
+ScrollContainer.BorderSizePixel = 0
+ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollContainer.ScrollBarThickness = 6
+ScrollContainer.Parent = MainFrame
+
+local ScrollCorner = Instance.new("UICorner")
+ScrollCorner.CornerRadius = UDim.new(0, 8)
+ScrollCorner.Parent = ScrollContainer
+
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.Padding = UDim.new(0, 5)
+ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ListLayout.Parent = ScrollContainer
+
+local function serverHop()
+    TimerLabel.Text = "⏳ กำลังค้นหาเซิร์ฟเวอร์ใหม่..."
+    task.wait(1)
+    local x = pcall(function()
+        local servers = {}
+        local req = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"))
+        for _, v in pairs(req.data) do
+            if v.playing < v.maxPlayers and v.id ~= game.JobId then table.insert(servers, v.id) end
+        end
+        if #servers > 0 then TeleportService:TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], LocalPlayer)
+        else TeleportService:Teleport(game.PlaceId, LocalPlayer) end
+    end)
+    if not x then TeleportService:Teleport(game.PlaceId, LocalPlayer) end
+end
+
+local function getSongName(assetId)
+    local success, info = pcall(function() return MarketplaceService:GetProductInfo(assetId, Enum.InfoType.Asset) end)
+    if success and info then return info.Name else return "Unknown / ลิขสิทธิ์" end
+end
+
+local function sendToDiscord(songName, songId)
+    if DISCORD_WEBHOOK_URL == "" then return end
+    local mapName = "Unknown Map"
+    pcall(function() mapName = MarketplaceService:GetProductInfo(game.PlaceId).Name end)
+    
+    local data = {
+        ["embeds"] = {{
+            ["title"] = "🎵 [แม่นยำ V2] ตรวจพบเพลงใหม่สำเร็จ!",
+            ["color"] = 4620411,
+            ["fields"] = {
+                {["name"] = "📝 ชื่อเพลง", ["value"] = "```" .. songName .. "```", ["inline"] = false},
+                {["name"] = "🆔 ID เพลง", ["value"] = "```" .. tostring(songId) .. "
+```", ["inline"] = true},
+                {["name"] = "🎮 จากแมพ", ["value"] = "```" .. mapName .. "```", ["inline"] = false}
+            },
+            ["footer"] = {["text"] = "บอท: " .. LocalPlayer.Name .. " | เวลา: " .. os.date("%X")}
+        }}
+    }
+    local request = syn and syn.request or http_request or request or HttpService.Request
+    if request then request({Url = DISCORD_WEBHOOK_URL, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = HttpService:JSONEncode(data)}) end
+end
+
+local function createSongItem(name, id)
+    local ItemFrame = Instance.new("Frame")
+    ItemFrame.Size = UDim2.new(1, -10, 0, 45)
+    ItemFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    ItemFrame.BorderSizePixel = 0
+    
+    local ItemCorner = Instance.new("UICorner")
+    ItemCorner.CornerRadius = UDim.new(0, 5)
+    ItemCorner.Parent = ItemFrame
+    
+    local SongText = Instance.new("TextLabel")
+    SongText.Size = UDim2.new(0.7, 0, 1, 0)
+    SongText.Position = UDim2.new(0, 10, 0, 0)
+    SongText.BackgroundTransparency = 1
+    SongText.Text = "🎵 " .. name .. "\nID: " .. id
+    SongText.TextColor3 = Color3.fromRGB(220, 220, 220)
+    SongText.TextSize = 11
+    SongText.TextXAlignment = Enum.TextXAlignment.Left
+    SongText.Font = Enum.Font.SourceSans
+    SongText.Parent = ItemFrame
+    
+    local CopyBtn = Instance.new("TextButton")
+    CopyBtn.Size = UDim2.new(0.25, 0, 0.7, 0)
+    CopyBtn.Position = UDim2.new(0.72, 0, 0.15, 0)
+    CopyBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+    CopyBtn.Text = "Copy ID"
+    CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CopyBtn.TextSize = 11
+    CopyBtn.Font = Enum.Font.SourceSansBold
+    CopyBtn.Parent = ItemFrame
+    
+    CopyBtn.MouseButton1Click:Connect(function()
+        if setclipboard then setclipboard(tostring(id)) CopyBtn.Text = "Copied!" task.wait(1) CopyBtn.Text = "Copy ID" end
+    end)
+    
+    ItemFrame.Parent = ScrollContainer
+    ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y)
+end
+
+local isFarming = false
+local farmTimer = TIME_BEFORE_HOP
+
+FarmButton.MouseButton1Click:Connect(function()
+    isFarming = not isFarming
+    if isFarming then
+        FarmButton.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+        FarmButton.Text = "✅ โหมดฟาร์มข้ามเซิร์ฟเวอร์: เปิดอยู่"
+        farmTimer = TIME_BEFORE_HOP
+    else
+        FarmButton.BackgroundColor3 = Color3.fromRGB(192, 57, 43)
+        FarmButton.Text = "❌ โหมดฟาร์มข้ามเซิร์ฟเวอร์: ปิดอยู่"
+        TimerLabel.Text = "สถานะ: หยุดการฟาร์มชั่วคราว"
+        TimerLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    end
+end)
+
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new(0,0))
+end)
+
+-- 🛠️ [SYSTEM 2: ACCURATE CORE SCANNER] ระบบคัดกรองเสียงอัจฉริยะ V2
+task.spawn(function()
+    while true do
+        for _, v in pairs(game:GetDescendants()) do
+            if v:IsA("Sound") and v.IsPlaying and v.Volume > 0 then
+                if v.TimeLength > 30 and string.match(v.SoundId, "%d+") then
+                    local rawId = string.match(v.SoundId, "%d+")
+                    local songId = tonumber(rawId)
+                    
+                    if songId and songId > 0 and not LoggedSongs[tostring(songId)] then
+                        LoggedSongs[tostring(songId)] = true
+                        
+                        if writefile then writefile(filename, HttpService:JSONEncode(LoggedSongs)) end
+                        
+                        local songName = getSongName(songId)
+                        createSongItem(songName, songId)
+                        sendToDiscord(songName, songId)
+                    end
+                end
+            end
+        end
+        
+        if isFarming then
+            if farmTimer > 0 then
+                TimerLabel.Text = "🕒 กำลังฟาร์มเซิร์ฟนี้... จะย้ายเซิร์ฟเวอร์ในอีก " .. farmTimer .. " วินาที"
+                TimerLabel.TextColor3 = Color3.fromRGB(52, 152, 219)
+                farmTimer = farmTimer - 1
+            else
+                isFarming = false
+                serverHop()
+            end
+        end
+        task.wait(1)
+    end
+end)
+
