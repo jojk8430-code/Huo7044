@@ -1,0 +1,36 @@
+-- สคริปต์สแกนหาเพลงที่กำลังเล่นอยู่ในแมพ พร้อมบอกชื่อและ ID
+local SoundService = game:GetService("SoundService")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+-- ฟังก์ชันดึงชื่อเพลงจาก ID (เพราะในไฟล์ Sound ส่วนใหญ่จะมีแค่ ID ไม่มีชื่อภาษาไทย/อังกฤษบอกตรงๆ)
+local function getSongName(assetId)
+    local success, info = pcall(function()
+        return MarketplaceService:GetProductInfo(assetId, Enum.InfoType.Asset)
+    end)
+    if success and info then
+        return info.Name
+    else
+        return "ไม่สามารถดึงชื่อเพลงได้ (อาจโดนลบหรือติดลิขสิทธิ์)"
+    end
+end
+
+-- ไล่หาไฟล์เสียงทั้งหมดในเกมที่กำลังเปิดอยู่
+for _, v in pairs(game:GetDescendants()) do
+    if v:IsA("Sound") and v.IsPlaying and v.Volume > 0 then
+        -- แปลงรูปแบบ SoundId (เช่น rbxassetid://123456 ให้เหลือแค่ตัวเลข)
+        local rawId = string.match(v.SoundId, "%d+")
+        if rawId then
+            local songId = tonumber(rawId)
+            local songName = getSongName(songId)
+            
+            -- แสดงผลลัพธ์ออกมาในช่อง Console (กด F9 ในเกมเพื่อดู)
+            print("=============================")
+            print("เจอเพลงที่กำลังเปิด! 🎵")
+            print("ชื่อเพลง: " .. songName)
+            print("ID เพลง: " .. songId)
+            print("ตำแหน่งไฟล์: " .. v:GetFullName())
+            print("=============================")
+        end
+    end
+end
+
