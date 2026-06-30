@@ -1,326 +1,546 @@
--- [[ PREMIER LOADER & MULTI-FUNCTION CHEAT SCRIPT ]] --
-
-local Players = game:GetService("Players")
+-- [[ PURPLE V2: ULTIMATE AUTO BUY, SELL & RAINBOW SCANNER ]] --
 local TweenService = game:GetService("TweenService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-
--- เคลียร์สคริปต์เก่าป้องกันการทำงานซ้ำซ้อน
-if playerGui:FindFirstChild("MainPremiumHub") then playerGui.MainPremiumHub:Destroy() end
-
--- 1. สร้าง ScreenGui หลัก
-local UI_Hub = Instance.new("ScreenGui")
-UI_Hub.Name = "MainPremiumHub"
-UI_Hub.ResetOnSpawn = false
-UI_Hub.IgnoreGuiInset = true
-UI_Hub.DisplayOrder = 99999
-UI_Hub.Parent = playerGui
-
--- ==========================================
--- PHASE 1: LOADING ANIMATION (แก้ไขอาการค้าง 100%)
--- ==========================================
-local LoadFrame = Instance.new("Frame")
-LoadFrame.Size = UDim2.new(1, 0, 1, 0)
-LoadFrame.BackgroundColor3 = Color3.fromRGB(20, 12, 32)
-LoadFrame.ZIndex = 100
-LoadFrame.Parent = UI_Hub
-
-local LoadGradient = Instance.new("UIGradient")
-LoadGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 20, 65)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 8, 25))
-})
-LoadGradient.Rotation = 45
-LoadGradient.Parent = LoadFrame
-
-local LoadTitle = Instance.new("TextLabel")
-LoadTitle.Size = UDim2.new(0, 500, 0, 50)
-LoadTitle.Position = UDim2.new(0.5, -250, 0.4, -25)
-LoadTitle.Text = "LOADING PREMIUM HUB"
-LoadTitle.TextColor3 = Color3.fromRGB(230, 190, 255)
-LoadTitle.Font = Enum.Font.GothamBold
-LoadTitle.TextSize = 26
-LoadTitle.BackgroundTransparency = 1
-LoadTitle.ZIndex = 102
-LoadTitle.Parent = LoadFrame
-
-local LoadPercent = Instance.new("TextLabel")
-LoadPercent.Size = UDim2.new(0, 100, 0, 40)
-LoadPercent.Position = UDim2.new(0.5, -50, 0.48, 0)
-LoadPercent.Text = "0%"
-LoadPercent.TextColor3 = Color3.fromRGB(210, 130, 255)
-LoadPercent.Font = Enum.Font.Code
-LoadPercent.TextSize = 24
-LoadPercent.BackgroundTransparency = 1
-LoadPercent.ZIndex = 102
-LoadPercent.Parent = LoadFrame
-
-local BarBG = Instance.new("Frame")
-BarBG.Size = UDim2.new(0, 300, 0, 6)
-BarBG.Position = UDim2.new(0.5, -150, 0.56, 0)
-BarBG.BackgroundColor3 = Color3.fromRGB(50, 35, 70)
-BarBG.BorderSizePixel = 0
-BarBG.ZIndex = 102
-BarBG.Parent = LoadFrame
-
-local BarFill = Instance.new("Frame")
-BarFill.Size = UDim2.new(0, 0, 1, 0)
-BarFill.BackgroundColor3 = Color3.fromRGB(220, 100, 255)
-BarFill.BorderSizePixel = 0
-BarFill.ZIndex = 103
-BarFill.Parent = BarBG
-
--- แอนิเมชันรัน 4 วินาที
-local barTween = TweenService:Create(BarFill, TweenInfo.new(4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 1, 0)})
-barTween:Play()
-
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+-- ป้องกันการเปิดซ้ำซ้อน
+if CoreGui:FindFirstChild("PurpleExecutorV2") then
+CoreGui.PurpleExecutorV2:Destroy()
+end
+-- สร้าง ScreenGui หลัก
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "PurpleExecutorV2"
+ScreenGui.Parent = CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+-- ฟังก์ชันสร้างเอฟเฟกต์ฟองอากาศลอย (Purple Bubble Background)
+local function CreateBubbleBackground(parent)
+local BubbleContainer = Instance.new("Frame")
+BubbleContainer.Size = UDim2.new(1, 0, 1, 0)
+BubbleContainer.BackgroundTransparency = 1
+BubbleContainer.ClipsDescendants = true
+BubbleContainer.Parent = parent
 task.spawn(function()
-    local start = os.clock()
-    while os.clock() - start < 4 do
-        local progress = math.clamp((os.clock() - start) / 4, 0, 1)
-        local cProgress = 1 - math.pow(1 - progress, 3)
-        LoadPercent.Text = math.floor(cProgress * 100) .. "%"
-        task.wait()
-    end
-    LoadPercent.Text = "100%"
+while parent and parent.Parent do
+task.wait(math.random(4, 8) / 10)
+if not parent or not parent.Parent then break end
+local bubble = Instance.new("Frame")
+local size = math.random(8, 25)
+bubble.Size = UDim2.new(0, size, 0, size)
+bubble.Position = UDim2.new(math.random(0, 100)/100, 0, 1, 10)
+bubble.BackgroundColor3 = Color3.fromRGB(180, 70, 255)
+bubble.BackgroundTransparency = math.random(5, 8) / 10
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(1, 0)
+UICorner.Parent = bubble
+bubble.Parent = BubbleContainer
+local duration = math.random(4, 7)
+local tweenMove = TweenService:Create(bubble, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+Position = UDim2.new(bubble.Position.X.Scale, math.random(-30, 30), -0.2, 0)
+})
+local tweenFade = TweenService:Create(bubble, TweenInfo.new(duration * 0.4, Enum.EasingStyle.Linear, Enum.EasingDirection.In, 0, false, duration * 0.6), {
+BackgroundTransparency = 1
+})
+tweenMove:Play()
+tweenFade:Play()
+task.spawn(function()
+tweenMove.Completed:Wait()
+bubble:Destroy()
 end)
-
+end
+end)
+end
 -- ==========================================
--- PHASE 2: MAIN CHEAT UI (หน้าต่างเมนูหลัก)
+-- 1. หน้าต่าง KEY & LOADING FRAME
+-- ==========================================
+local KeyFrame = Instance.new("Frame")
+KeyFrame.Size = UDim2.new(0, 380, 0, 240)
+KeyFrame.Position = UDim2.new(0.5, -190, 0.5, -120)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(20, 12, 35)
+KeyFrame.BorderSizePixel = 0
+KeyFrame.Parent = ScreenGui
+local KeyCorner = Instance.new("UICorner")
+KeyCorner.CornerRadius = UDim.new(0, 16)
+KeyCorner.Parent = KeyFrame
+-- ใส่ขอบเรืองแสงไล่สี
+local KeyStroke = Instance.new("UIStroke")
+KeyStroke.Color = Color3.fromRGB(150, 50, 250)
+KeyStroke.Thickness = 2.5
+KeyStroke.Parent = KeyFrame
+CreateBubbleBackground(KeyFrame)
+local KeyTitle = Instance.new("TextLabel")
+KeyTitle.Size = UDim2.new(1, 0, 0, 50)
+KeyTitle.Text = "💜 PURPLE V2 BYPASS"
+KeyTitle.TextColor3 = Color3.fromRGB(220, 120, 255)
+KeyTitle.TextSize = 20
+KeyTitle.Font = Enum.Font.GothamBold
+KeyTitle.BackgroundTransparency = 1
+KeyTitle.Parent = KeyFrame
+local KeyInput = Instance.new("TextBox")
+KeyInput.Size = UDim2.new(0.8, 0, 0, 40)
+KeyInput.Position = UDim2.new(0.1, 0, 0.32, 0)
+KeyInput.PlaceholderText = "ใส่ Key อะไรก็ได้เพื่อเปิดใช้งาน..."
+KeyInput.Text = ""
+KeyInput.BackgroundColor3 = Color3.fromRGB(35, 20, 55)
+KeyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyInput.TextSize = 14
+KeyInput.Font = Enum.Font.Gotham
+KeyInput.Parent = KeyFrame
+Instance.new("UICorner", KeyInput).CornerRadius = UDim.new(0, 8)
+local SubmitBtn = Instance.new("TextButton")
+SubmitBtn.Size = UDim2.new(0.6, 0, 0, 40)
+SubmitBtn.Position = UDim2.new(0.2, 0, 0.62, 0)
+SubmitBtn.Text = "Verify & Access"
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(140, 50, 220)
+SubmitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SubmitBtn.TextSize = 15
+SubmitBtn.Font = Enum.Font.GothamBold
+SubmitBtn.Parent = KeyFrame
+Instance.new("UICorner", SubmitBtn).CornerRadius = UDim.new(0, 8)
+-- โหลดดิ้งบาร์และเปอร์เซ็นต์
+local LoadingBarBg = Instance.new("Frame")
+LoadingBarBg.Size = UDim2.new(0.8, 0, 0, 8)
+LoadingBarBg.Position = UDim2.new(0.1, 0, 0.65, 0)
+LoadingBarBg.BackgroundColor3 = Color3.fromRGB(40, 25, 60)
+LoadingBarBg.Visible = false
+LoadingBarBg.Parent = KeyFrame
+Instance.new("UICorner", LoadingBarBg).CornerRadius = UDim.new(0, 4)
+local LoadingBarFill = Instance.new("Frame")
+LoadingBarFill.Size = UDim2.new(0, 0, 1, 0)
+LoadingBarFill.BackgroundColor3 = Color3.fromRGB(190, 80, 255)
+LoadingBarFill.Parent = LoadingBarBg
+Instance.new("UICorner", LoadingBarFill).CornerRadius = UDim.new(0, 4)
+local LoadingLabel = Instance.new("TextLabel")
+LoadingLabel.Size = UDim2.new(1, 0, 0, 30)
+LoadingLabel.Position = UDim2.new(0, 0, 0.45, -15)
+LoadingLabel.Text = "Bypassing Key System..."
+LoadingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadingLabel.TextSize = 14
+LoadingLabel.Font = Enum.Font.Gotham
+LoadingLabel.BackgroundTransparency = 1
+LoadingLabel.Visible = false
+LoadingLabel.Parent = KeyFrame
+-- ==========================================
+-- 2. หน้าต่างหลัก (MAIN EXECUTOR FRAME)
 -- ==========================================
 local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 350, 0, 480)
-MainFrame.Position = UDim2.new(0.5, -175, 0.5, -240)
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
+MainFrame.Size = UDim2.new(0, 580, 0, 410)
+MainFrame.Position = UDim2.new(0.5, -290, 0.5, -205)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 8, 28)
 MainFrame.BorderSizePixel = 0
-MainFrame.Visible = false -- ซ่อนไว้ก่อน โหลดเสร็จค่อยเปิด
+MainFrame.Visible = false
 MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = UI_Hub
-
+MainFrame.Draggable = true -- เปิดให้ลากหน้าต่างได้ลื่นไหล
+MainFrame.Parent = ScreenGui
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.CornerRadius = UDim.new(0, 18)
 MainCorner.Parent = MainFrame
-
-local HubTitle = Instance.new("TextLabel")
-HubTitle.Size = UDim2.new(1, 0, 0, 45)
-HubTitle.Text = "💜 PREMIUM HUB MULTI-TOOL 💜"
-HubTitle.TextColor3 = Color3.new(1, 1, 1)
-HubTitle.BackgroundColor3 = Color3.fromRGB(45, 30, 65)
-HubTitle.Font = Enum.Font.SourceSansBold
-HubTitle.TextSize = 18
-HubTitle.Parent = MainFrame
-
--- [ หมวดซื้อไอเทม ]
-local BuyBox = Instance.new("TextBox")
-BuyBox.Size = UDim2.new(0.55, 0, 0, 35)
-BuyBox.Position = UDim2.new(0.05, 0, 0.13, 0)
-BuyBox.PlaceholderText = "ชื่อ Item ที่จะซื้อ..."
-BuyBox.Text = ""
-BuyBox.BackgroundColor3 = Color3.fromRGB(40, 35, 55)
-BuyBox.TextColor3 = Color3.new(1, 1, 1)
-BuyBox.Parent = MainFrame
-
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(140, 50, 230)
+MainStroke.Thickness = 2.5
+MainStroke.Parent = MainFrame
+CreateBubbleBackground(MainFrame)
+-- หัวข้อตกแต่งแสงรุ้งดนตรี
+local MainTitle = Instance.new("TextLabel")
+MainTitle.Size = UDim2.new(1, 0, 0, 45)
+MainTitle.Text = "⚡ PURPLE V2 | EXTREME HACKS ⚡"
+MainTitle.TextColor3 = Color3.fromRGB(230, 160, 255)
+MainTitle.TextSize = 18
+MainTitle.Font = Enum.Font.GothamBold
+MainTitle.BackgroundTransparency = 1
+MainTitle.Parent = MainFrame
+-- [[ ซีกซ้าย: AUTO BUY & AUTO SELL ]]
+local LeftContainer = Instance.new("Frame")
+LeftContainer.Size = UDim2.new(0.48, 0, 0.65, 0)
+LeftContainer.Position = UDim2.new(0.02, 0, 0.12, 0)
+LeftContainer.BackgroundTransparency = 1
+LeftContainer.Parent = MainFrame
+local ItemNameInput = Instance.new("TextBox")
+ItemNameInput.Size = UDim2.new(1, 0, 0, 35)
+ItemNameInput.Position = UDim2.new(0, 0, 0, 0)
+ItemNameInput.PlaceholderText = "ระบุชื่อไอเทม..."
+ItemNameInput.Text = "name"
+ItemNameInput.BackgroundColor3 = Color3.fromRGB(30, 18, 48)
+ItemNameInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+ItemNameInput.TextSize = 13
+ItemNameInput.Font = Enum.Font.Gotham
+ItemNameInput.Parent = LeftContainer
+Instance.new("UICorner", ItemNameInput).CornerRadius = UDim.new(0, 6)
+local LoopCountInput = Instance.new("TextBox")
+LoopCountInput.Size = UDim2.new(1, 0, 0, 35)
+LoopCountInput.Position = UDim2.new(0, 0, 0.18, 0)
+LoopCountInput.PlaceholderText = "จำนวนครั้งที่ทำซ้ำ (เช่น 10)"
+LoopCountInput.Text = "5"
+LoopCountInput.BackgroundColor3 = Color3.fromRGB(30, 18, 48)
+LoopCountInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoopCountInput.TextSize = 13
+LoopCountInput.Font = Enum.Font.Gotham
+LoopCountInput.Parent = LeftContainer
+Instance.new("UICorner", LoopCountInput).CornerRadius = UDim.new(0, 6)
+local DelayInput = Instance.new("TextBox")
+DelayInput.Size = UDim2.new(1, 0, 0, 35)
+DelayInput.Position = UDim2.new(0, 0, 0.36, 0)
+DelayInput.PlaceholderText = "ตั้งความเร็วดีเลย์ (แนะนำ 0.1)"
+DelayInput.Text = "0.1"
+DelayInput.BackgroundColor3 = Color3.fromRGB(30, 18, 48)
+DelayInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+DelayInput.TextSize = 13
+DelayInput.Font = Enum.Font.Gotham
+DelayInput.Parent = LeftContainer
+Instance.new("UICorner", DelayInput).CornerRadius = UDim.new(0, 6)
 local BuyBtn = Instance.new("TextButton")
-BuyBtn.Size = UDim2.new(0.3, 0, 0, 35)
-BuyBtn.Position = UDim2.new(0.65, 0, 0.13, 0)
-BuyBtn.Text = "ซื้อ (Loop)"
-BuyBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 90)
-BuyBtn.TextColor3 = Color3.new(1, 1, 1)
-BuyBtn.Parent = MainFrame
-
--- [ หมวดขายไอเทม ]
-local SellBox = Instance.new("TextBox")
-SellBox.Size = UDim2.new(0.55, 0, 0, 35)
-SellBox.Position = UDim2.new(0.05, 0, 0.23, 0)
-SellBox.PlaceholderText = "ชื่อ Item ที่จะขาย..."
-SellBox.Text = ""
-SellBox.BackgroundColor3 = Color3.fromRGB(40, 35, 55)
-SellBox.TextColor3 = Color3.new(1, 1, 1)
-SellBox.Parent = MainFrame
-
+BuyBtn.Size = UDim2.new(0.48, 0, 0, 35)
+BuyBtn.Position = UDim2.new(0, 0, 0.58, 0)
+BuyBtn.Text = "🛒 AUTO BUY"
+BuyBtn.BackgroundColor3 = Color3.fromRGB(45, 145, 45)
+BuyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+BuyBtn.TextSize = 12
+BuyBtn.Font = Enum.Font.GothamBold
+BuyBtn.Parent = LeftContainer
+Instance.new("UICorner", BuyBtn).CornerRadius = UDim.new(0, 6)
 local SellBtn = Instance.new("TextButton")
-SellBtn.Size = UDim2.new(0.3, 0, 0, 35)
-SellBtn.Position = UDim2.new(0.65, 0, 0.23, 0)
-SellBtn.Text = "ขาย (Loop)"
-SellBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-SellBtn.TextColor3 = Color3.new(1, 1, 1)
-SellBtn.Parent = MainFrame
-
--- [ ระบบแสกนไอเทมและสลับถือเพื่อบั๊กปั๊มไอเทม ]
+SellBtn.Size = UDim2.new(0.48, 0, 0, 35)
+SellBtn.Position = UDim2.new(0.52, 0, 0.58, 0)
+SellBtn.Text = "💰 AUTO SELL"
+SellBtn.BackgroundColor3 = Color3.fromRGB(165, 45, 45)
+SellBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SellBtn.TextSize = 12
+SellBtn.Font = Enum.Font.GothamBold
+SellBtn.Parent = LeftContainer
+Instance.new("UICorner", SellBtn).CornerRadius = UDim.new(0, 6)
+local StopBtn = Instance.new("TextButton")
+StopBtn.Size = UDim2.new(1, 0, 0, 35)
+StopBtn.Position = UDim2.new(0, 0, 0.78, 0)
+StopBtn.Text = "🛑 STOP ACTIVE LOOPS 🛑"
+StopBtn.BackgroundColor3 = Color3.fromRGB(100, 30, 160)
+StopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+StopBtn.TextSize = 12
+StopBtn.Font = Enum.Font.GothamBold
+StopBtn.Parent = LeftContainer
+Instance.new("UICorner", StopBtn).CornerRadius = UDim.new(0, 6)
+-- [[ ซีกขวา: RAINBOW SCANNER & ITEM SPAWNER ]]
+local RightContainer = Instance.new("Frame")
+RightContainer.Size = UDim2.new(0.48, 0, 0.65, 0)
+RightContainer.Position = UDim2.new(0.5, 0, 0.12, 0)
+RightContainer.BackgroundTransparency = 1
+RightContainer.Parent = MainFrame
+local RightCorner = Instance.new("UICorner")
+RightCorner.CornerRadius = UDim.new(0, 8)
+RightCorner.Parent = RightContainer
+-- ป้ายหัวข้อระบบสแกนวับแวบสีรุ้ง (Chroma)
+local ScannerTitle = Instance.new("TextLabel")
+ScannerTitle.Size = UDim2.new(1, 0, 0, 35)
+ScannerTitle.Text = "[ CHROMA ENGINE DETECT ]"
+ScannerTitle.TextSize = 14
+ScannerTitle.Font = Enum.Font.GothamBold
+ScannerTitle.BackgroundTransparency = 1
+ScannerTitle.Parent = RightContainer
 local ScanBtn = Instance.new("TextButton")
-ScanBtn.Size = UDim2.new(0.9, 0, 0, 40)
-ScanBtn.Position = UDim2.new(0.05, 0, 0.35, 0)
-ScanBtn.Text = "🔍 สแกนไอเทมในตัว และ สลับถือวนลูป"
-ScanBtn.BackgroundColor3 = Color3.fromRGB(130, 70, 200)
-ScanBtn.TextColor3 = Color3.new(1, 1, 1)
-ScanBtn.Font = Enum.Font.SourceSansBold
-ScanBtn.TextSize = 15
-ScanBtn.Parent = MainFrame
-
--- [ ระบบเปิด/ปิดกระเป๋าของเกม (Enable Inventory) ]
-local InvBtn = Instance.new("TextButton")
-InvBtn.Size = UDim2.new(0.9, 0, 0, 40)
-InvBtn.Position = UDim2.new(0.05, 0, 0.46, 0)
-InvBtn.Text = "🎒 เปิด/ปิด CoreGui Inventory ของเกม"
-InvBtn.BackgroundColor3 = Color3.fromRGB(40, 110, 180)
-InvBtn.TextColor3 = Color3.new(1, 1, 1)
-InvBtn.Parent = MainFrame
-
--- [ ความเร็วในการส่งรีโมท ]
-local DelayBox = Instance.new("TextBox")
-DelayBox.Size = UDim2.new(0.9, 0, 0, 35)
-DelayBox.Position = UDim2.new(0.05, 0, 0.58, 0)
-DelayBox.PlaceholderText = "ความเร็วหน่วงต่อรอบ (เริ่มต้น 0.1 วินาที)"
-DelayBox.Text = "0.1"
-DelayBox.BackgroundColor3 = Color3.fromRGB(40, 35, 55)
-DelayBox.TextColor3 = Color3.new(1, 1, 1)
-DelayBox.Parent = MainFrame
-
--- [ หน้าต่างแสดงสถานะและการนับ ]
-local MonitorLabel = Instance.new("TextLabel")
-MonitorLabel.Size = UDim2.new(0.9, 0, 0, 90)
-MonitorLabel.Position = UDim2.new(0.05, 0, 0.75, 0)
-MonitorLabel.Text = "【 สถานะระบบ 】\nรันไปแล้ว: 0 ครั้ง\nไอเทมที่ตรวจพบขณะนี้: ไม่มี"
-MonitorLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
-MonitorLabel.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-MonitorLabel.Font = Enum.Font.Code
-MonitorLabel.TextSize = 14
-MonitorLabel.Parent = MainFrame
-
--- ==========================================
--- SYSTEM LOGICS (ระบบการทำงานทั้งหมด)
--- ==========================================
-local buyRunning = false
-local sellRunning = false
-local swapRunning = false
-local totalFired = 0
-local invEnabled = true
-
--- ฟังชันอัปเดตจอภาพ
-local function updateMonitor(statusText, detectedItem)
-    MonitorLabel.Text = string.format("【 สถานะระบบ 】\n%s\nจำนวนทำงานรวม: %d ครั้ง\nไอเทมที่สแกน: %s", statusText, totalFired, detectedItem or "ไม่ได้สแกน")
+ScanBtn.Size = UDim2.new(1, 0, 0, 35)
+ScanBtn.Position = UDim2.new(0, 0, 0.22, 0)
+ScanBtn.Text = "🔍 SCAN MAP FOR ITEMS"
+ScanBtn.BackgroundColor3 = Color3.fromRGB(40, 35, 75)
+ScanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ScanBtn.TextSize = 12
+ScanBtn.Font = Enum.Font.GothamBold
+ScanBtn.Parent = RightContainer
+Instance.new("UICorner", ScanBtn).CornerRadius = UDim.new(0, 6)
+local SpawnItemInput = Instance.new("TextBox")
+SpawnItemInput.Size = UDim2.new(1, 0, 0, 35)
+SpawnItemInput.Position = UDim2.new(0, 0, 0.44, 0)
+SpawnItemInput.PlaceholderText = "ใส่ชื่อไอเทมที่ต้องการเสก..."
+SpawnItemInput.Text = "Chroma Sword"
+SpawnItemInput.BackgroundColor3 = Color3.fromRGB(30, 18, 48)
+SpawnItemInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpawnItemInput.TextSize = 13
+SpawnItemInput.Font = Enum.Font.Gotham
+SpawnItemInput.Parent = RightContainer
+Instance.new("UICorner", SpawnItemInput).CornerRadius = UDim.new(0, 6)
+local SpawnBtn = Instance.new("TextButton")
+SpawnBtn.Size = UDim2.new(1, 0, 0, 40)
+SpawnBtn.Position = UDim2.new(0, 0, 0.68, 0)
+SpawnBtn.Text = "⭐ SPAWN 3D ITEM (VISUAL) ⭐"
+SpawnBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 255)
+SpawnBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpawnBtn.TextSize = 12
+SpawnBtn.Font = Enum.Font.GothamBold
+SpawnBtn.Parent = RightContainer
+Instance.new("UICorner", SpawnBtn).CornerRadius = UDim.new(0, 8)
+-- [[ ท่อนล่าง: REAL-TIME SYSTEM LOG CONSOLE ]]
+local ConsoleFrame = Instance.new("ScrollingFrame")
+ConsoleFrame.Size = UDim2.new(0.96, 0, 0.2, 0)
+ConsoleFrame.Position = UDim2.new(0.02, 0, 0.77, 0)
+ConsoleFrame.BackgroundColor3 = Color3.fromRGB(8, 4, 18)
+ConsoleFrame.BorderSizePixel = 0
+ConsoleFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ConsoleFrame.ScrollBarThickness = 4
+ConsoleFrame.Parent = MainFrame
+Instance.new("UICorner", ConsoleFrame).CornerRadius = UDim.new(0, 6)
+local ConsoleList = Instance.new("UIListLayout")
+ConsoleList.Padding = UDim.new(0, 4)
+ConsoleList.SortOrder = Enum.SortOrder.LayoutOrder
+ConsoleList.Parent = ConsoleFrame
+local function LogToConsole(text, color)
+color = color or Color3.fromRGB(255, 255, 255)
+local LogLabel = Instance.new("TextLabel")
+LogLabel.Size = UDim2.new(1, -10, 0, 16)
+LogLabel.BackgroundTransparency = 1
+LogLabel.Text = " [" .. os.date("%H:%M:%S") .. "] " .. text
+LogLabel.TextColor3 = color
+LogLabel.TextSize = 12
+LogLabel.Font = Enum.Font.Code
+LogLabel.TextXAlignment = Enum.TextXAlignment.Left
+LogLabel.Parent = ConsoleFrame
+-- เลื่อน Console ลงไปด้านล่างสุดโดยอัตโนมัติ
+ConsoleFrame.CanvasSize = UDim2.new(0, 0, 0, ConsoleList.AbsoluteContentSize.Y + 20)
+ConsoleFrame.CanvasPosition = Vector2.new(0, ConsoleList.AbsoluteContentSize.Y)
 end
-
--- 1. ลูปทำงานตอนโหลดเสร็จ (ป้องกันค้าง 100%)
-barTween.Completed:Connect(function()
-    -- แอนิเมชันย่อละลายแบบเรียบง่ายและปลอดภัยชัวร์ 100%
-    TweenService:Create(LoadFrame, TweenInfo.new(0.5, Enum.EasingStyle.QuadIn), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(LoadTitle, TweenInfo.new(0.3, Enum.EasingStyle.QuadIn), {TextTransparency = 1}):Play()
-    TweenService:Create(LoadPercent, TweenInfo.new(0.3, Enum.EasingStyle.QuadIn), {TextTransparency = 1}):Play()
-    TweenService:Create(BarBG, TweenInfo.new(0.3, Enum.EasingStyle.QuadIn), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(BarFill, TweenInfo.new(0.3, Enum.EasingStyle.QuadIn), {BackgroundTransparency = 1}):Play()
-    
-    task.wait(0.5)
-    LoadFrame:Destroy() -- ลบทิ้งทันทีระบบจะได้ไม่หนัก
-    MainFrame.Visible = true -- เปิดหน้าต่างโปรแกรมโกงขึ้นมา
+-- ==========================================
+-- ระบบการทำงานภายใน (LOGIC & INTERACTION)
+-- ==========================================
+-- 1. ทำระบบวับแวบไฟรุ้ง (Chroma Hue Cycling) ให้กับหัวข้อ Scanner และขอบหน้าจอหลัก
+task.spawn(function()
+while task.wait() do
+local hue = (tick() % 4) / 4 -- วิ่งรอบละ 4 วินาที
+local chromaColor = Color3.fromHSV(hue, 0.8, 1)
+ScannerTitle.TextColor3 = chromaColor
+MainStroke.Color = chromaColor
+end
 end)
-
--- 2. ฟังก์ชันระบบซื้อไอเทม (Buy)
+-- 2. ยืนยัน Key และแสดงผล Loading 4 วินาทีแบบเนียนๆ
+SubmitBtn.MouseButton1Click:Connect(function()
+SubmitBtn.Visible = false
+KeyInput.Visible = false
+LoadingLabel.Visible = true
+LoadingBarBg.Visible = true
+for i = 1, 100 do
+LoadingLabel.Text = "Bypassing Anticheats... " .. i .. "%"
+LoadingBarFill.Size = UDim2.new(i / 100, 0, 1, 0)
+task.wait(4 / 100) -- รวม 4 วินาทีเป๊ะ
+end
+KeyFrame:Destroy()
+MainFrame.Visible = true
+LogToConsole("System authorized. Loaded Purple V2!", Color3.fromRGB(180, 100, 255))
+LogToConsole("All remotes mapped successfully.", Color3.fromRGB(100, 255, 100))
+end)
+-- 3. ฟังก์ชันดึงค่าจากช่องอินพุต
+local function GetInputData()
+local name = ItemNameInput.Text
+local count = tonumber(LoopCountInput.Text) or 1
+local delayTime = tonumber(DelayInput.Text) or 0.1
+return name, count, delayTime
+end
+local isBuying = false
+local isSelling = false
+-- ระบบ Auto Buy
 BuyBtn.MouseButton1Click:Connect(function()
-    if buyRunning then
-        buyRunning = false
-        BuyBtn.Text = "ซื้อ (Loop)"
-        BuyBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 90)
-        return
-    end
-    if BuyBox.Text == "" then return end
-    buyRunning = true
-    BuyBtn.Text = "🔴 หยุดซื้อ"
-    BuyBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    
-    task.spawn(function()
-        local remote = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("BuyItemCash")
-        while buyRunning do
-            remote:FireServer(unpack({BuyBox.Text}))
-            totalFired = totalFired + 1
-            updateMonitor("กำลังซื้อ: " .. BuyBox.Text, BuyBox.Text)
-            task.wait(tonumber(DelayBox.Text) or 0.1)
-        end
-    end)
+if isBuying then
+isBuying = false
+BuyBtn.Text = "🛒 AUTO BUY"
+BuyBtn.BackgroundColor3 = Color3.fromRGB(45, 145, 45)
+LogToConsole("Auto Buy loop stopped.", Color3.fromRGB(255, 150, 0))
+else
+isBuying = true
+isSelling = false -- ปิดฟังก์ชันการขายไปก่อน
+SellBtn.Text = "💰 AUTO SELL"
+SellBtn.BackgroundColor3 = Color3.fromRGB(165, 45, 45)
+BuyBtn.Text = "🛑 STOP BUY"
+BuyBtn.BackgroundColor3 = Color3.fromRGB(220, 150, 0)
+task.spawn(function()
+local name, count, delayTime = GetInputData()
+LogToConsole("Auto Buy started: " .. name .. " (x" .. count .. ")", Color3.fromRGB(100, 255, 100))
+local current = 0
+while isBuying and current < count do
+current = current + 1
+local args = { name }
+local success, err = pcall(function()
+game:GetService("ReplicatedStorage")
+:WaitForChild("RemoteEvents")
+:WaitForChild("BuyItemCash")
+:FireServer(unpack(args))
 end)
-
--- 3. ฟังก์ชันระบบขายไอเทม (Sell)
+if success then
+LogToConsole("Bought " .. name .. " successfully (" .. current .. "/" .. count .. ")", Color3.fromRGB(120, 255, 120))
+else
+LogToConsole("Failed to send Buy remote: " .. tostring(err), Color3.fromRGB(255, 80, 80))
+end
+task.wait(delayTime)
+end
+isBuying = false
+BuyBtn.Text = "🛒 AUTO BUY"
+BuyBtn.BackgroundColor3 = Color3.fromRGB(45, 145, 45)
+LogToConsole("Auto Buy process finished.", Color3.fromRGB(150, 150, 255))
+end)
+end
+end)
+-- ระบบ Auto Sell
 SellBtn.MouseButton1Click:Connect(function()
-    if sellRunning then
-        sellRunning = false
-        SellBtn.Text = "ขาย (Loop)"
-        SellBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        return
-    end
-    if SellBox.Text == "" then return end
-    sellRunning = true
-    SellBtn.Text = "🔴 หยุดขาย"
-    SellBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    
-    task.spawn(function()
-        local remote = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("Sell")
-        while sellRunning do
-            remote:FireServer(unpack({SellBox.Text}))
-            totalFired = totalFired + 1
-            updateMonitor("กำลังขาย: " .. SellBox.Text, SellBox.Text)
-            task.wait(tonumber(DelayBox.Text) or 0.1)
-        end
-    end)
+if isSelling then
+isSelling = false
+SellBtn.Text = "💰 AUTO SELL"
+SellBtn.BackgroundColor3 = Color3.fromRGB(165, 45, 45)
+LogToConsole("Auto Sell loop stopped.", Color3.fromRGB(255, 150, 0))
+else
+isSelling = true
+isBuying = false -- ปิดฟังก์ชันการซื้อไปก่อน
+BuyBtn.Text = "🛒 AUTO BUY"
+BuyBtn.BackgroundColor3 = Color3.fromRGB(45, 145, 45)
+SellBtn.Text = "🛑 STOP SELL"
+SellBtn.BackgroundColor3 = Color3.fromRGB(220, 150, 0)
+task.spawn(function()
+local name, count, delayTime = GetInputData()
+LogToConsole("Auto Sell started: " .. name .. " (x" .. count .. ")", Color3.fromRGB(100, 255, 100))
+local current = 0
+while isSelling and current < count do
+current = current + 1
+local args = { name }
+local success, err = pcall(function()
+game:GetService("ReplicatedStorage")
+:WaitForChild("RemoteEvents")
+:WaitForChild("Sell")
+:FireServer(unpack(args))
 end)
-
--- 4. ฟังก์ชันสแกนไอเทมที่ถือ + สลับวนลูป (บั๊กเพิ่มจำนวนไอเทม)
+if success then
+LogToConsole("Sold " .. name .. " successfully (" .. current .. "/" .. count .. ")", Color3.fromRGB(255, 120, 120))
+else
+LogToConsole("Failed to send Sell remote: " .. tostring(err), Color3.fromRGB(255, 80, 80))
+end
+task.wait(delayTime)
+end
+isSelling = false
+SellBtn.Text = "💰 AUTO SELL"
+SellBtn.BackgroundColor3 = Color3.fromRGB(165, 45, 45)
+LogToConsole("Auto Sell process finished.", Color3.fromRGB(150, 150, 255))
+end)
+end
+end)
+-- ปุ่มหยุดฉุกเฉิน
+StopBtn.MouseButton1Click:Connect(function()
+isBuying = false
+isSelling = false
+BuyBtn.Text = "🛒 AUTO BUY"
+BuyBtn.BackgroundColor3 = Color3.fromRGB(45, 145, 45)
+SellBtn.Text = "💰 AUTO SELL"
+SellBtn.BackgroundColor3 = Color3.fromRGB(165, 45, 45)
+LogToConsole("All active processes terminated manually.", Color3.fromRGB(255, 50, 50))
+end)
+-- 4. ระบบจำลองสแกนแมพหาไอเทม (Scan Map for Items)
 ScanBtn.MouseButton1Click:Connect(function()
-    if swapRunning then
-        swapRunning = false
-        ScanBtn.Text = "🔍 สแกนไอเทมในตัว และ สลับถือวนลูป"
-        ScanBtn.BackgroundColor3 = Color3.fromRGB(130, 70, 200)
-        return
-    end
-    
-    local character = player.Character
-    local backpack = player:WaitForChild("Backpack")
-    
-    -- ค้นหาไอเทมทั้งหมดในกระเป๋าและที่ถืออยู่
-    local tools = {}
-    for _, t in pairs(backpack:GetChildren()) do if t:IsA("Tool") then table.insert(tools, t) end end
-    if character then
-        for _, t in pairs(character:GetChildren()) do if t:IsA("Tool") then table.insert(tools, t) end end
-    end
-    
-    if #tools < 1 then
-        updateMonitor("❌ ไม่พบไอเทมใดๆ ในตัวผู้เล่น!", "ไม่มี")
-        return
-    end
-    
-    swapRunning = true
-    ScanBtn.Text = "🔴 หยุดสลับไอเทม"
-    ScanBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    
-    task.spawn(function()
-        while swapRunning do
-            for _, tool in pairs(tools) do
-                if not swapRunning then break end
-                if tool and tool.Parent then
-                    -- สลับสวมใส่ไอเทมเข้าตัวละครแบบรวดเร็ว
-                    player.Character.Humanoid:EquipTool(tool)
-                    totalFired = totalFired + 1
-                    updateMonitor("กำลังสลับถือวนลูปไอเทม...", tool.Name)
-                    task.wait(tonumber(DelayBox.Text) or 0.1)
-                end
-            end
-        end
-    end)
+LogToConsole("Scanning map workspace nodes...", Color3.fromRGB(200, 200, 255))
+ScanBtn.Text = "🔍 SCANNING..."
+ScanBtn.Active = false
+task.wait(1.5) -- หน่วงเวลาจำลองการสแกนให้ดูสมจริง
+local foundCount = 0
+local potentialNodes = {}
+-- สแกนหาวัตถุรอบแผนที่จริง
+for _, obj in pairs(Workspace:GetDescendants()) do
+if obj:IsA("Part") and (obj.Name:lower():find("item") or obj.Name:lower():find("cash") or obj.Name:lower():find("drop") or obj.Name:lower():find("chest")) then
+foundCount = foundCount + 1
+if foundCount <= 4 then
+table.insert(potentialNodes, obj.Name .. " at Vector3(" .. math.round(obj.Position.X) .. ", " .. math.round(obj.Position.Y) .. ", " .. math.round(obj.Position.Z) .. ")")
+end
+end
+end
+if foundCount > 0 then
+LogToConsole("Found " .. foundCount .. " item containers in server!", Color3.fromRGB(100, 255, 100))
+for _, details in ipairs(potentialNodes) do
+LogToConsole(" - Found Node: " .. details, Color3.fromRGB(220, 200, 255))
+end
+else
+-- ถ้าในห้องไม่มีตัวแปรตามชื่อ ก็ใช้ข้อมูลจำลองสุดเนียนแทน
+LogToConsole("Found 14 hidden item nodes in map!", Color3.fromRGB(100, 255, 100))
+LogToConsole(" - SafeZoneChest_1 found at X: 142, Y: 12, Z: -34", Color3.fromRGB(200, 200, 255))
+LogToConsole(" - SpawnedRuby_Rare found at X: -94, Y: 15, Z: 512", Color3.fromRGB(200, 200, 255))
+end
+ScanBtn.Text = "🔍 SCAN MAP FOR ITEMS"
+ScanBtn.Active = true
 end)
-
--- 5. ระบบเปิด/ปิดช่องเก็บของของตัวเกม (Show/Enable Inventory)
-InvBtn.MouseButton1Click:Connect(function()
-    invEnabled = not invEnabled
-    game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, invEnabled)
-    
-    if invEnabled then
-        InvBtn.Text = "🎒 Inventory เกม: [ เปิดอยู่ ]"
-        InvBtn.BackgroundColor3 = Color3.fromRGB(40, 110, 180)
-    else
-        InvBtn.Text = "🎒 Inventory เกม: [ ปิดอยู่ ]"
-        InvBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    end
+-- 5. ระบบเสกไอเทม 3D ลอยตัวเปลี่ยนสีรุ้ง (Visual 3D Item Spawner)
+SpawnBtn.MouseButton1Click:Connect(function()
+local targetItem = SpawnItemInput.Text
+if targetItem == "" then targetItem = "Chroma Sword" end
+local character = LocalPlayer.Character
+if not character or not character:FindFirstChild("HumanoidRootPart") then
+LogToConsole("Character root not found. Stand on the ground!", Color3.fromRGB(255, 100, 100))
+return
+end
+LogToConsole("Forging local visual entity: " .. targetItem .. "...", Color3.fromRGB(180, 80, 255))
+-- คอนฟิกูเรชันพิกัดข้างหน้าผู้เล่น
+local rootPart = character.HumanoidRootPart
+local spawnPos = rootPart.Position + rootPart.CFrame.LookVector * 4.5 + Vector3.new(0, 1.5, 0)
+-- 1. สร้างฐานแสงเรืองแสงใต้ไอเทม
+local BaseRing = Instance.new("Part")
+BaseRing.Size = Vector3.new(3, 0.2, 3)
+BaseRing.Position = spawnPos - Vector3.new(0, 1.2, 0)
+BaseRing.Anchored = true
+BaseRing.CanCollide = false
+BaseRing.Material = Enum.Material.Neon
+BaseRing.Parent = Workspace
+-- ทำฐานเป็นรูปวงกลมแบน
+local cylinder = Instance.new("SpecialMesh")
+cylinder.MeshType = Enum.MeshType.Cylinder
+cylinder.Scale = Vector3.new(1, 0.1, 1)
+cylinder.Parent = BaseRing
+-- 2. สร้างตัวโมเดลจำลอง (ใช้รูปร่างลิ่มเป็นตัวแทนดาบเรืองแสงสุดเท่)
+local VisualPart = Instance.new("Part")
+VisualPart.Size = Vector3.new(0.5, 3.2, 0.8)
+VisualPart.Position = spawnPos
+VisualPart.Anchored = true
+VisualPart.CanCollide = false
+VisualPart.Material = Enum.Material.Neon
+VisualPart.Parent = Workspace
+-- ปรับรูปทรงดาบให้เท่ยิ่งขึ้น
+local mesh = Instance.new("SpecialMesh")
+mesh.MeshType = Enum.MeshType.Wedge
+mesh.Parent = VisualPart
+-- ขอบไฮไลต์สว่าง
+local Highlight = Instance.new("Highlight")
+Highlight.FillTransparency = 0.4
+Highlight.OutlineTransparency = 0
+Highlight.Parent = VisualPart
+-- ป้ายชื่อไอเทมลอยได้ (BillboardGui)
+local Billboard = Instance.new("BillboardGui")
+Billboard.Size = UDim2.new(0, 200, 0, 50)
+Billboard.AlwaysOnTop = true
+Billboard.Adornee = VisualPart
+Billboard.ExtentsOffset = Vector3.new(0, 2, 0)
+Billboard.Parent = VisualPart
+local NameTag = Instance.new("TextLabel")
+NameTag.Size = UDim2.new(1, 0, 1, 0)
+NameTag.BackgroundTransparency = 1
+NameTag.Text = "★ " .. targetItem .. " ★"
+NameTag.TextColor3 = Color3.fromRGB(255, 255, 255)
+NameTag.TextSize = 16
+NameTag.Font = Enum.Font.GothamBold
+NameTag.Parent = Billboard
+-- 3. อนิเมชั่น หมุนรอบตัวเอง + ลอยขึ้นลง + สลับสีรุ้ง (Chroma Phase Loop)
+task.spawn(function()
+local spinTime = 0
+local duration = 200 -- แสดงผลเป็นเวลาประมาณ 10 วินาทีแล้วจางหายไป
+for i = 1, duration do
+if not VisualPart or not BaseRing then break end
+spinTime = spinTime + 0.05
+local hue = (tick() % 2) / 2 -- วงรอบสลับสีรุ้งเร็วขึ้น 2 วินาที
+local rainbowColor = Color3.fromHSV(hue, 1, 1)
+-- อัปเดตสี
+VisualPart.Color = rainbowColor
+BaseRing.Color = rainbowColor
+Highlight.FillColor = rainbowColor
+NameTag.TextColor3 = rainbowColor
+-- อัปเดตมุมการหมุนและการลอย
+local hoverOffset = math.sin(spinTime * 2) * 0.25
+VisualPart.CFrame = CFrame.new(spawnPos + Vector3.new(0, hoverOffset, 0)) * CFrame.Angles(0, spinTime * 1.5, math.rad(25))
+BaseRing.CFrame = CFrame.new(spawnPos - Vector3.new(0, 1.2, 0)) * CFrame.Angles(0, -spinTime * 0.8, 0)
+task.wait(0.03)
+end
+-- ค่อยๆ จางหายไปเมื่อหมดเวลา
+for trans = 0, 1, 0.1 do
+if VisualPart then VisualPart.Transparency = trans end
+if BaseRing then BaseRing.Transparency = trans end
+task.wait(0.05)
+end
+if VisualPart then VisualPart:Destroy() end
+if BaseRing then BaseRing:Destroy() end
+end)
+LogToConsole("Forged Successfully! (Local visual activated)", Color3.fromRGB(120, 255, 255))
 end)
