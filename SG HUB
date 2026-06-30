@@ -1,189 +1,326 @@
--- [[ NEW FIXED PREMIER LOADING SCREEN ]] --
+-- [[ PREMIER LOADER & MULTI-FUNCTION CHEAT SCRIPT ]] --
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- ลบของเก่าออกก่อนถ้ามีค้างอยู่
-if playerGui:FindFirstChild("DynamicLoadingScreen") then
-    playerGui.DynamicLoadingScreen:Destroy()
-end
+-- เคลียร์สคริปต์เก่าป้องกันการทำงานซ้ำซ้อน
+if playerGui:FindFirstChild("MainPremiumHub") then playerGui.MainPremiumHub:Destroy() end
 
 -- 1. สร้าง ScreenGui หลัก
-local LoadingScreen = Instance.new("ScreenGui")
-LoadingScreen.Name = "DynamicLoadingScreen"
-LoadingScreen.ResetOnSpawn = false
-LoadingScreen.IgnoreGuiInset = true
-LoadingScreen.DisplayOrder = 99999 -- ดันให้อยู่หน้าสุดจริงๆ
-LoadingScreen.Parent = playerGui
+local UI_Hub = Instance.new("ScreenGui")
+UI_Hub.Name = "MainPremiumHub"
+UI_Hub.ResetOnSpawn = false
+UI_Hub.IgnoreGuiInset = true
+UI_Hub.DisplayOrder = 99999
+UI_Hub.Parent = playerGui
 
--- Background หลัก (สีม่วงเข้ม)
-local Background = Instance.new("Frame")
-Background.Name = "Background"
-Background.Size = UDim2.new(1, 0, 1, 0)
-Background.BackgroundColor3 = Color3.fromRGB(20, 10, 35) -- สีม่วงเข้ม (ไม่ดำสนิท)
-Background.BorderSizePixel = 0
-Background.ZIndex = 1
-Background.Parent = LoadingScreen
+-- ==========================================
+-- PHASE 1: LOADING ANIMATION (แก้ไขอาการค้าง 100%)
+-- ==========================================
+local LoadFrame = Instance.new("Frame")
+LoadFrame.Size = UDim2.new(1, 0, 1, 0)
+LoadFrame.BackgroundColor3 = Color3.fromRGB(20, 12, 32)
+LoadFrame.ZIndex = 100
+LoadFrame.Parent = UI_Hub
 
--- เพิ่ม Gradient ไล่เฉดสีม่วงให้ดูสวยงาม
-local UIGradient = Instance.new("UIGradient")
-UIGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 15, 60)), -- ม่วงสว่างบน
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 5, 25))    -- ม่วงเข้มล่าง
+local LoadGradient = Instance.new("UIGradient")
+LoadGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 20, 65)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 8, 25))
 })
-UIGradient.Rotation = 45
-UIGradient.Parent = Background
+LoadGradient.Rotation = 45
+LoadGradient.Parent = LoadFrame
 
--- 2. ตัวอักษรข้อความ (ดัน ZIndex ขึ้นมาให้อยู่เหนือพื้นหลัง)
-local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.Size = UDim2.new(0, 500, 0, 50)
-Title.Position = UDim2.new(0.5, -250, 0.4, -25)
-Title.Text = "SYSTEM INITIALIZING"
-Title.TextColor3 = Color3.fromRGB(230, 200, 255) -- สีม่วงอ่อนนีออน
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 28
-Title.BackgroundTransparency = 1
-Title.ZIndex = 3 -- อยู่เหนือสุด
-Title.Parent = Background
+local LoadTitle = Instance.new("TextLabel")
+LoadTitle.Size = UDim2.new(0, 500, 0, 50)
+LoadTitle.Position = UDim2.new(0.5, -250, 0.4, -25)
+LoadTitle.Text = "LOADING PREMIUM HUB"
+LoadTitle.TextColor3 = Color3.fromRGB(230, 190, 255)
+LoadTitle.Font = Enum.Font.GothamBold
+LoadTitle.TextSize = 26
+LoadTitle.BackgroundTransparency = 1
+LoadTitle.ZIndex = 102
+LoadTitle.Parent = LoadFrame
 
--- ตัวเลขเปอร์เซ็นต์
-local PercentText = Instance.new("TextLabel")
-PercentText.Name = "PercentText"
-PercentText.Size = UDim2.new(0, 100, 0, 40)
-PercentText.Position = UDim2.new(0.5, -50, 0.48, 0)
-PercentText.Text = "0%"
-PercentText.TextColor3 = Color3.fromRGB(200, 130, 255)
-PercentText.Font = Enum.Font.Code
-PercentText.TextSize = 24
-PercentText.BackgroundTransparency = 1
-PercentText.ZIndex = 3
-PercentText.Parent = Background
+local LoadPercent = Instance.new("TextLabel")
+LoadPercent.Size = UDim2.new(0, 100, 0, 40)
+LoadPercent.Position = UDim2.new(0.5, -50, 0.48, 0)
+LoadPercent.Text = "0%"
+LoadPercent.TextColor3 = Color3.fromRGB(210, 130, 255)
+LoadPercent.Font = Enum.Font.Code
+LoadPercent.TextSize = 24
+LoadPercent.BackgroundTransparency = 1
+LoadPercent.ZIndex = 102
+LoadPercent.Parent = LoadFrame
 
--- หลอดโหลดอันนอก (กรอบ)
-local BarBackground = Instance.new("Frame")
-BarBackground.Name = "BarBackground"
-BarBackground.Size = UDim2.new(0, 300, 0, 8)
-BarBackground.Position = UDim2.new(0.5, -150, 0.56, 0)
-BarBackground.BackgroundColor3 = Color3.fromRGB(50, 35, 75)
-BarBackground.BorderSizePixel = 0
-BarBackground.ZIndex = 3
-BarBackground.Parent = Background
+local BarBG = Instance.new("Frame")
+BarBG.Size = UDim2.new(0, 300, 0, 6)
+BarBG.Position = UDim2.new(0.5, -150, 0.56, 0)
+BarBG.BackgroundColor3 = Color3.fromRGB(50, 35, 70)
+BarBG.BorderSizePixel = 0
+BarBG.ZIndex = 102
+BarBG.Parent = LoadFrame
 
-local BarCorner = Instance.new("UICorner")
-BarCorner.CornerRadius = UDim.new(1, 0)
-BarCorner.Parent = BarBackground
-
--- หลอดโหลดอันใน (ที่จะวิ่ง)
 local BarFill = Instance.new("Frame")
-BarFill.Name = "BarFill"
-BarFill.Size = UDim2.new(0, 0, 1, 0) -- เริ่มต้นจาก 0
-BarFill.BackgroundColor3 = Color3.fromRGB(210, 100, 255) -- นีออนม่วงสว่าง
+BarFill.Size = UDim2.new(0, 0, 1, 0)
+BarFill.BackgroundColor3 = Color3.fromRGB(220, 100, 255)
 BarFill.BorderSizePixel = 0
-BarFill.ZIndex = 4 -- อยู่เหนือกรอบหลอดโหลด
-BarFill.Parent = BarBackground
+BarFill.ZIndex = 103
+BarFill.Parent = BarBG
 
-local FillCorner = Instance.new("UICorner")
-FillCorner.CornerRadius = UDim.new(1, 0)
-FillCorner.Parent = BarFill
-
-
--- [[ 3. ระบบสร้างฟองลอยน้ำ (Purple Bubble FX) ]] --
-local isSpawningBubbles = true
-
-task.spawn(function()
-    while isSpawningBubbles do
-        task.wait(0.2) -- ปรับเวลาเกิดฟองให้เสถียรขึ้น
-        
-        local bubble = Instance.new("Frame")
-        bubble.Name = "Bubble"
-        
-        local size = math.random(8, 22)
-        bubble.Size = UDim2.new(0, size, 0, size)
-        bubble.Position = UDim2.new(math.random(5, 95)/100, 0, 1.1, 0) -- เกิดใต้จอเล็กน้อย
-        bubble.BackgroundColor3 = Color3.fromRGB(160, 100, 255)
-        bubble.BackgroundTransparency = math.random(60, 80) / 100
-        bubble.BorderSizePixel = 0
-        bubble.ZIndex = 2 -- อยู่ระหว่างพื้นหลังกับตัวอักษร
-        bubble.Parent = Background
-        
-        local bCorner = Instance.new("UICorner")
-        bCorner.CornerRadius = UDim.new(1, 0)
-        bCorner.Parent = bubble
-        
-        local floatTime = math.random(35, 55) / 10
-        local targetPos = UDim2.new(bubble.Position.X.Scale + (math.random(-5, 5)/100), 0, -0.1, 0)
-        
-        local floatTween = TweenService:Create(bubble, TweenInfo.new(floatTime, Enum.EasingStyle.QuadOut), {
-            Position = targetPos,
-            BackgroundTransparency = 1
-        })
-        floatTween:Play()
-        
-        floatTween.Completed:Connect(function()
-            bubble:Destroy()
-        end)
-    end
-end)
-
-
--- [[ 4. แอนิเมชันนับถอยหลัง 4 วินาที + เอฟเฟกต์เบลอละลายหายไป ]] --
-
--- แอนิเมชันหลอดวิ่ง 4 วินาที
-local barInfo = TweenInfo.new(4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
-local barTween = TweenService:Create(BarFill, barInfo, {Size = UDim2.new(1, 0, 1, 0)})
+-- แอนิเมชันรัน 4 วินาที
+local barTween = TweenService:Create(BarFill, TweenInfo.new(4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 1, 0)})
 barTween:Play()
 
--- ตัวเลขเปอร์เซ็นต์วิ่งวิ่งตามจริง
 task.spawn(function()
-    local startTime = os.clock()
-    local duration = 4
-    while os.clock() - startTime < duration do
-        local progress = (os.clock() - startTime) / duration
-        local cubicProgress = 1 - math.pow(1 - progress, 3) -- อิงตามหลอดวิ่ง
-        if cubicProgress > 1 then cubicProgress = 1 end
-        
-        PercentText.Text = math.floor(cubicProgress * 100) .. "%"
+    local start = os.clock()
+    while os.clock() - start < 4 do
+        local progress = math.clamp((os.clock() - start) / 4, 0, 1)
+        local cProgress = 1 - math.pow(1 - progress, 3)
+        LoadPercent.Text = math.floor(cProgress * 100) .. "%"
         task.wait()
     end
-    PercentText.Text = "100%"
+    LoadPercent.Text = "100%"
 end)
 
--- เมื่อโหลดเสร็จ (ครบ 4 วินาที)
+-- ==========================================
+-- PHASE 2: MAIN CHEAT UI (หน้าต่างเมนูหลัก)
+-- ==========================================
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 350, 0, 480)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -240)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
+MainFrame.BorderSizePixel = 0
+MainFrame.Visible = false -- ซ่อนไว้ก่อน โหลดเสร็จค่อยเปิด
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = UI_Hub
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = MainFrame
+
+local HubTitle = Instance.new("TextLabel")
+HubTitle.Size = UDim2.new(1, 0, 0, 45)
+HubTitle.Text = "💜 PREMIUM HUB MULTI-TOOL 💜"
+HubTitle.TextColor3 = Color3.new(1, 1, 1)
+HubTitle.BackgroundColor3 = Color3.fromRGB(45, 30, 65)
+HubTitle.Font = Enum.Font.SourceSansBold
+HubTitle.TextSize = 18
+HubTitle.Parent = MainFrame
+
+-- [ หมวดซื้อไอเทม ]
+local BuyBox = Instance.new("TextBox")
+BuyBox.Size = UDim2.new(0.55, 0, 0, 35)
+BuyBox.Position = UDim2.new(0.05, 0, 0.13, 0)
+BuyBox.PlaceholderText = "ชื่อ Item ที่จะซื้อ..."
+BuyBox.Text = ""
+BuyBox.BackgroundColor3 = Color3.fromRGB(40, 35, 55)
+BuyBox.TextColor3 = Color3.new(1, 1, 1)
+BuyBox.Parent = MainFrame
+
+local BuyBtn = Instance.new("TextButton")
+BuyBtn.Size = UDim2.new(0.3, 0, 0, 35)
+BuyBtn.Position = UDim2.new(0.65, 0, 0.13, 0)
+BuyBtn.Text = "ซื้อ (Loop)"
+BuyBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 90)
+BuyBtn.TextColor3 = Color3.new(1, 1, 1)
+BuyBtn.Parent = MainFrame
+
+-- [ หมวดขายไอเทม ]
+local SellBox = Instance.new("TextBox")
+SellBox.Size = UDim2.new(0.55, 0, 0, 35)
+SellBox.Position = UDim2.new(0.05, 0, 0.23, 0)
+SellBox.PlaceholderText = "ชื่อ Item ที่จะขาย..."
+SellBox.Text = ""
+SellBox.BackgroundColor3 = Color3.fromRGB(40, 35, 55)
+SellBox.TextColor3 = Color3.new(1, 1, 1)
+SellBox.Parent = MainFrame
+
+local SellBtn = Instance.new("TextButton")
+SellBtn.Size = UDim2.new(0.3, 0, 0, 35)
+SellBtn.Position = UDim2.new(0.65, 0, 0.23, 0)
+SellBtn.Text = "ขาย (Loop)"
+SellBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+SellBtn.TextColor3 = Color3.new(1, 1, 1)
+SellBtn.Parent = MainFrame
+
+-- [ ระบบแสกนไอเทมและสลับถือเพื่อบั๊กปั๊มไอเทม ]
+local ScanBtn = Instance.new("TextButton")
+ScanBtn.Size = UDim2.new(0.9, 0, 0, 40)
+ScanBtn.Position = UDim2.new(0.05, 0, 0.35, 0)
+ScanBtn.Text = "🔍 สแกนไอเทมในตัว และ สลับถือวนลูป"
+ScanBtn.BackgroundColor3 = Color3.fromRGB(130, 70, 200)
+ScanBtn.TextColor3 = Color3.new(1, 1, 1)
+ScanBtn.Font = Enum.Font.SourceSansBold
+ScanBtn.TextSize = 15
+ScanBtn.Parent = MainFrame
+
+-- [ ระบบเปิด/ปิดกระเป๋าของเกม (Enable Inventory) ]
+local InvBtn = Instance.new("TextButton")
+InvBtn.Size = UDim2.new(0.9, 0, 0, 40)
+InvBtn.Position = UDim2.new(0.05, 0, 0.46, 0)
+InvBtn.Text = "🎒 เปิด/ปิด CoreGui Inventory ของเกม"
+InvBtn.BackgroundColor3 = Color3.fromRGB(40, 110, 180)
+InvBtn.TextColor3 = Color3.new(1, 1, 1)
+InvBtn.Parent = MainFrame
+
+-- [ ความเร็วในการส่งรีโมท ]
+local DelayBox = Instance.new("TextBox")
+DelayBox.Size = UDim2.new(0.9, 0, 0, 35)
+DelayBox.Position = UDim2.new(0.05, 0, 0.58, 0)
+DelayBox.PlaceholderText = "ความเร็วหน่วงต่อรอบ (เริ่มต้น 0.1 วินาที)"
+DelayBox.Text = "0.1"
+DelayBox.BackgroundColor3 = Color3.fromRGB(40, 35, 55)
+DelayBox.TextColor3 = Color3.new(1, 1, 1)
+DelayBox.Parent = MainFrame
+
+-- [ หน้าต่างแสดงสถานะและการนับ ]
+local MonitorLabel = Instance.new("TextLabel")
+MonitorLabel.Size = UDim2.new(0.9, 0, 0, 90)
+MonitorLabel.Position = UDim2.new(0.05, 0, 0.75, 0)
+MonitorLabel.Text = "【 สถานะระบบ 】\nรันไปแล้ว: 0 ครั้ง\nไอเทมที่ตรวจพบขณะนี้: ไม่มี"
+MonitorLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
+MonitorLabel.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+MonitorLabel.Font = Enum.Font.Code
+MonitorLabel.TextSize = 14
+MonitorLabel.Parent = MainFrame
+
+-- ==========================================
+-- SYSTEM LOGICS (ระบบการทำงานทั้งหมด)
+-- ==========================================
+local buyRunning = false
+local sellRunning = false
+local swapRunning = false
+local totalFired = 0
+local invEnabled = true
+
+-- ฟังชันอัปเดตจอภาพ
+local function updateMonitor(statusText, detectedItem)
+    MonitorLabel.Text = string.format("【 สถานะระบบ 】\n%s\nจำนวนทำงานรวม: %d ครั้ง\nไอเทมที่สแกน: %s", statusText, totalFired, detectedItem or "ไม่ได้สแกน")
+end
+
+-- 1. ลูปทำงานตอนโหลดเสร็จ (ป้องกันค้าง 100%)
 barTween.Completed:Connect(function()
-    isSpawningBubbles = false -- หยุดสร้างฟองเพิ่ม
+    -- แอนิเมชันย่อละลายแบบเรียบง่ายและปลอดภัยชัวร์ 100%
+    TweenService:Create(LoadFrame, TweenInfo.new(0.5, Enum.EasingStyle.QuadIn), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(LoadTitle, TweenInfo.new(0.3, Enum.EasingStyle.QuadIn), {TextTransparency = 1}):Play()
+    TweenService:Create(LoadPercent, TweenInfo.new(0.3, Enum.EasingStyle.QuadIn), {TextTransparency = 1}):Play()
+    TweenService:Create(BarBG, TweenInfo.new(0.3, Enum.EasingStyle.QuadIn), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(BarFill, TweenInfo.new(0.3, Enum.EasingStyle.QuadIn), {BackgroundTransparency = 1}):Play()
     
-    -- สร้าง Blur ตอนจบใน Lighting
-    local blurEffect = Instance.new("BlurEffect")
-    blurEffect.Size = 0
-    blurEffect.Parent = Lighting
+    task.wait(0.5)
+    LoadFrame:Destroy() -- ลบทิ้งทันทีระบบจะได้ไม่หนัก
+    MainFrame.Visible = true -- เปิดหน้าต่างโปรแกรมโกงขึ้นมา
+end)
+
+-- 2. ฟังก์ชันระบบซื้อไอเทม (Buy)
+BuyBtn.MouseButton1Click:Connect(function()
+    if buyRunning then
+        buyRunning = false
+        BuyBtn.Text = "ซื้อ (Loop)"
+        BuyBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 90)
+        return
+    end
+    if BuyBox.Text == "" then return end
+    buyRunning = true
+    BuyBtn.Text = "🔴 หยุดซื้อ"
+    BuyBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     
-    local fadeInfo = TweenInfo.new(0.6, Enum.EasingStyle.QuadOut)
-    
-    -- ทำการ Fade ลบข้อความและหลอดออกแบบสมูท
-    TweenService:Create(Title, fadeInfo, {TextTransparency = 1, TextSize = 35}):Play()
-    TweenService:Create(PercentText, fadeInfo, {TextTransparency = 1}):Play()
-    TweenService:Create(BarBackground, fadeInfo, {BackgroundTransparency = 1}):Play()
-    TweenService:Create(BarFill, fadeInfo, {BackgroundTransparency = 1}):Play()
-    
-    -- ดึงฉากในเกมให้เบลอขึ้นมา (เอฟเฟกต์ SG)
-    TweenService:Create(blurEffect, fadeInfo, {Size = 20}):Play()
-    
-    task.wait(0.5) -- รอเอฟเฟกต์ตัวหนังสือละลายเสร็จ
-    
-    -- แอนิเมชันฉากหลังม่วงค่อยๆ จางออก เผยให้เห็นตัวเกม
-    local bgFade = TweenService:Create(Background, TweenInfo.new(0.8, Enum.EasingStyle.QuadIn), {BackgroundTransparency = 1})
-    bgFade:Play()
-    
-    -- ค่อยๆ ลดความเบลอในเกมลงจนปกติ
-    TweenService:Create(blurEffect, TweenInfo.new(0.8, Enum.EasingStyle.QuadIn), {Size = 0}):Play()
-    
-    bgFade.Completed:Connect(function()
-        blurEffect:Destroy()
-        LoadingScreen:Destroy() -- เคลียร์สคริปต์ออกจากเครื่อง
+    task.spawn(function()
+        local remote = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("BuyItemCash")
+        while buyRunning do
+            remote:FireServer(unpack({BuyBox.Text}))
+            totalFired = totalFired + 1
+            updateMonitor("กำลังซื้อ: " .. BuyBox.Text, BuyBox.Text)
+            task.wait(tonumber(DelayBox.Text) or 0.1)
+        end
     end)
+end)
+
+-- 3. ฟังก์ชันระบบขายไอเทม (Sell)
+SellBtn.MouseButton1Click:Connect(function()
+    if sellRunning then
+        sellRunning = false
+        SellBtn.Text = "ขาย (Loop)"
+        SellBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+        return
+    end
+    if SellBox.Text == "" then return end
+    sellRunning = true
+    SellBtn.Text = "🔴 หยุดขาย"
+    SellBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    
+    task.spawn(function()
+        local remote = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("Sell")
+        while sellRunning do
+            remote:FireServer(unpack({SellBox.Text}))
+            totalFired = totalFired + 1
+            updateMonitor("กำลังขาย: " .. SellBox.Text, SellBox.Text)
+            task.wait(tonumber(DelayBox.Text) or 0.1)
+        end
+    end)
+end)
+
+-- 4. ฟังก์ชันสแกนไอเทมที่ถือ + สลับวนลูป (บั๊กเพิ่มจำนวนไอเทม)
+ScanBtn.MouseButton1Click:Connect(function()
+    if swapRunning then
+        swapRunning = false
+        ScanBtn.Text = "🔍 สแกนไอเทมในตัว และ สลับถือวนลูป"
+        ScanBtn.BackgroundColor3 = Color3.fromRGB(130, 70, 200)
+        return
+    end
+    
+    local character = player.Character
+    local backpack = player:WaitForChild("Backpack")
+    
+    -- ค้นหาไอเทมทั้งหมดในกระเป๋าและที่ถืออยู่
+    local tools = {}
+    for _, t in pairs(backpack:GetChildren()) do if t:IsA("Tool") then table.insert(tools, t) end end
+    if character then
+        for _, t in pairs(character:GetChildren()) do if t:IsA("Tool") then table.insert(tools, t) end end
+    end
+    
+    if #tools < 1 then
+        updateMonitor("❌ ไม่พบไอเทมใดๆ ในตัวผู้เล่น!", "ไม่มี")
+        return
+    end
+    
+    swapRunning = true
+    ScanBtn.Text = "🔴 หยุดสลับไอเทม"
+    ScanBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    
+    task.spawn(function()
+        while swapRunning do
+            for _, tool in pairs(tools) do
+                if not swapRunning then break end
+                if tool and tool.Parent then
+                    -- สลับสวมใส่ไอเทมเข้าตัวละครแบบรวดเร็ว
+                    player.Character.Humanoid:EquipTool(tool)
+                    totalFired = totalFired + 1
+                    updateMonitor("กำลังสลับถือวนลูปไอเทม...", tool.Name)
+                    task.wait(tonumber(DelayBox.Text) or 0.1)
+                end
+            end
+        end
+    end)
+end)
+
+-- 5. ระบบเปิด/ปิดช่องเก็บของของตัวเกม (Show/Enable Inventory)
+InvBtn.MouseButton1Click:Connect(function()
+    invEnabled = not invEnabled
+    game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, invEnabled)
+    
+    if invEnabled then
+        InvBtn.Text = "🎒 Inventory เกม: [ เปิดอยู่ ]"
+        InvBtn.BackgroundColor3 = Color3.fromRGB(40, 110, 180)
+    else
+        InvBtn.Text = "🎒 Inventory เกม: [ ปิดอยู่ ]"
+        InvBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    end
 end)
