@@ -1,0 +1,189 @@
+-- [[ NEW FIXED PREMIER LOADING SCREEN ]] --
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- ลบของเก่าออกก่อนถ้ามีค้างอยู่
+if playerGui:FindFirstChild("DynamicLoadingScreen") then
+    playerGui.DynamicLoadingScreen:Destroy()
+end
+
+-- 1. สร้าง ScreenGui หลัก
+local LoadingScreen = Instance.new("ScreenGui")
+LoadingScreen.Name = "DynamicLoadingScreen"
+LoadingScreen.ResetOnSpawn = false
+LoadingScreen.IgnoreGuiInset = true
+LoadingScreen.DisplayOrder = 99999 -- ดันให้อยู่หน้าสุดจริงๆ
+LoadingScreen.Parent = playerGui
+
+-- Background หลัก (สีม่วงเข้ม)
+local Background = Instance.new("Frame")
+Background.Name = "Background"
+Background.Size = UDim2.new(1, 0, 1, 0)
+Background.BackgroundColor3 = Color3.fromRGB(20, 10, 35) -- สีม่วงเข้ม (ไม่ดำสนิท)
+Background.BorderSizePixel = 0
+Background.ZIndex = 1
+Background.Parent = LoadingScreen
+
+-- เพิ่ม Gradient ไล่เฉดสีม่วงให้ดูสวยงาม
+local UIGradient = Instance.new("UIGradient")
+UIGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 15, 60)), -- ม่วงสว่างบน
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 5, 25))    -- ม่วงเข้มล่าง
+})
+UIGradient.Rotation = 45
+UIGradient.Parent = Background
+
+-- 2. ตัวอักษรข้อความ (ดัน ZIndex ขึ้นมาให้อยู่เหนือพื้นหลัง)
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Size = UDim2.new(0, 500, 0, 50)
+Title.Position = UDim2.new(0.5, -250, 0.4, -25)
+Title.Text = "SYSTEM INITIALIZING"
+Title.TextColor3 = Color3.fromRGB(230, 200, 255) -- สีม่วงอ่อนนีออน
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 28
+Title.BackgroundTransparency = 1
+Title.ZIndex = 3 -- อยู่เหนือสุด
+Title.Parent = Background
+
+-- ตัวเลขเปอร์เซ็นต์
+local PercentText = Instance.new("TextLabel")
+PercentText.Name = "PercentText"
+PercentText.Size = UDim2.new(0, 100, 0, 40)
+PercentText.Position = UDim2.new(0.5, -50, 0.48, 0)
+PercentText.Text = "0%"
+PercentText.TextColor3 = Color3.fromRGB(200, 130, 255)
+PercentText.Font = Enum.Font.Code
+PercentText.TextSize = 24
+PercentText.BackgroundTransparency = 1
+PercentText.ZIndex = 3
+PercentText.Parent = Background
+
+-- หลอดโหลดอันนอก (กรอบ)
+local BarBackground = Instance.new("Frame")
+BarBackground.Name = "BarBackground"
+BarBackground.Size = UDim2.new(0, 300, 0, 8)
+BarBackground.Position = UDim2.new(0.5, -150, 0.56, 0)
+BarBackground.BackgroundColor3 = Color3.fromRGB(50, 35, 75)
+BarBackground.BorderSizePixel = 0
+BarBackground.ZIndex = 3
+BarBackground.Parent = Background
+
+local BarCorner = Instance.new("UICorner")
+BarCorner.CornerRadius = UDim.new(1, 0)
+BarCorner.Parent = BarBackground
+
+-- หลอดโหลดอันใน (ที่จะวิ่ง)
+local BarFill = Instance.new("Frame")
+BarFill.Name = "BarFill"
+BarFill.Size = UDim2.new(0, 0, 1, 0) -- เริ่มต้นจาก 0
+BarFill.BackgroundColor3 = Color3.fromRGB(210, 100, 255) -- นีออนม่วงสว่าง
+BarFill.BorderSizePixel = 0
+BarFill.ZIndex = 4 -- อยู่เหนือกรอบหลอดโหลด
+BarFill.Parent = BarBackground
+
+local FillCorner = Instance.new("UICorner")
+FillCorner.CornerRadius = UDim.new(1, 0)
+FillCorner.Parent = BarFill
+
+
+-- [[ 3. ระบบสร้างฟองลอยน้ำ (Purple Bubble FX) ]] --
+local isSpawningBubbles = true
+
+task.spawn(function()
+    while isSpawningBubbles do
+        task.wait(0.2) -- ปรับเวลาเกิดฟองให้เสถียรขึ้น
+        
+        local bubble = Instance.new("Frame")
+        bubble.Name = "Bubble"
+        
+        local size = math.random(8, 22)
+        bubble.Size = UDim2.new(0, size, 0, size)
+        bubble.Position = UDim2.new(math.random(5, 95)/100, 0, 1.1, 0) -- เกิดใต้จอเล็กน้อย
+        bubble.BackgroundColor3 = Color3.fromRGB(160, 100, 255)
+        bubble.BackgroundTransparency = math.random(60, 80) / 100
+        bubble.BorderSizePixel = 0
+        bubble.ZIndex = 2 -- อยู่ระหว่างพื้นหลังกับตัวอักษร
+        bubble.Parent = Background
+        
+        local bCorner = Instance.new("UICorner")
+        bCorner.CornerRadius = UDim.new(1, 0)
+        bCorner.Parent = bubble
+        
+        local floatTime = math.random(35, 55) / 10
+        local targetPos = UDim2.new(bubble.Position.X.Scale + (math.random(-5, 5)/100), 0, -0.1, 0)
+        
+        local floatTween = TweenService:Create(bubble, TweenInfo.new(floatTime, Enum.EasingStyle.QuadOut), {
+            Position = targetPos,
+            BackgroundTransparency = 1
+        })
+        floatTween:Play()
+        
+        floatTween.Completed:Connect(function()
+            bubble:Destroy()
+        end)
+    end
+end)
+
+
+-- [[ 4. แอนิเมชันนับถอยหลัง 4 วินาที + เอฟเฟกต์เบลอละลายหายไป ]] --
+
+-- แอนิเมชันหลอดวิ่ง 4 วินาที
+local barInfo = TweenInfo.new(4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
+local barTween = TweenService:Create(BarFill, barInfo, {Size = UDim2.new(1, 0, 1, 0)})
+barTween:Play()
+
+-- ตัวเลขเปอร์เซ็นต์วิ่งวิ่งตามจริง
+task.spawn(function()
+    local startTime = os.clock()
+    local duration = 4
+    while os.clock() - startTime < duration do
+        local progress = (os.clock() - startTime) / duration
+        local cubicProgress = 1 - math.pow(1 - progress, 3) -- อิงตามหลอดวิ่ง
+        if cubicProgress > 1 then cubicProgress = 1 end
+        
+        PercentText.Text = math.floor(cubicProgress * 100) .. "%"
+        task.wait()
+    end
+    PercentText.Text = "100%"
+end)
+
+-- เมื่อโหลดเสร็จ (ครบ 4 วินาที)
+barTween.Completed:Connect(function()
+    isSpawningBubbles = false -- หยุดสร้างฟองเพิ่ม
+    
+    -- สร้าง Blur ตอนจบใน Lighting
+    local blurEffect = Instance.new("BlurEffect")
+    blurEffect.Size = 0
+    blurEffect.Parent = Lighting
+    
+    local fadeInfo = TweenInfo.new(0.6, Enum.EasingStyle.QuadOut)
+    
+    -- ทำการ Fade ลบข้อความและหลอดออกแบบสมูท
+    TweenService:Create(Title, fadeInfo, {TextTransparency = 1, TextSize = 35}):Play()
+    TweenService:Create(PercentText, fadeInfo, {TextTransparency = 1}):Play()
+    TweenService:Create(BarBackground, fadeInfo, {BackgroundTransparency = 1}):Play()
+    TweenService:Create(BarFill, fadeInfo, {BackgroundTransparency = 1}):Play()
+    
+    -- ดึงฉากในเกมให้เบลอขึ้นมา (เอฟเฟกต์ SG)
+    TweenService:Create(blurEffect, fadeInfo, {Size = 20}):Play()
+    
+    task.wait(0.5) -- รอเอฟเฟกต์ตัวหนังสือละลายเสร็จ
+    
+    -- แอนิเมชันฉากหลังม่วงค่อยๆ จางออก เผยให้เห็นตัวเกม
+    local bgFade = TweenService:Create(Background, TweenInfo.new(0.8, Enum.EasingStyle.QuadIn), {BackgroundTransparency = 1})
+    bgFade:Play()
+    
+    -- ค่อยๆ ลดความเบลอในเกมลงจนปกติ
+    TweenService:Create(blurEffect, TweenInfo.new(0.8, Enum.EasingStyle.QuadIn), {Size = 0}):Play()
+    
+    bgFade.Completed:Connect(function()
+        blurEffect:Destroy()
+        LoadingScreen:Destroy() -- เคลียร์สคริปต์ออกจากเครื่อง
+    end)
+end)
